@@ -85,6 +85,7 @@ EmbedHelper.prototype = {
     addEventListener("touchmove", this, false);
     addEventListener("touchend", this, false);
     addEventListener("DOMContentLoaded", this, true);
+    addEventListener("DOMMetaViewportFitChanged", this, true);
     addEventListener("DOMFormHasPassword", this, true);
     addEventListener("DOMAutoComplete", this, true);
     addEventListener("blur", this, true);
@@ -420,8 +421,34 @@ EmbedHelper.prototype = {
     }
   },
 
+  _sendViewportFitChanged: function(window) {
+    if (!window || window != content) {
+      return;
+    }
+
+    try {
+      let winId = Services.embedlite.getIDByWindow(window);
+      Services.embedlite.sendAsyncMessage(winId, "embed:viewportFit",
+                                          JSON.stringify({
+                                                           "viewportFit": window.windowUtils.getViewportFitInfo()
+                                                         }));
+    } catch (e) {
+      Logger.warn("embedhelper: sending viewport fit message failed", e)
+    }
+  },
+
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
+      case "DOMContentLoaded": {
+        if (aEvent.originalTarget == content.document) {
+          this._sendViewportFitChanged(content);
+        }
+        break;
+      }
+      case "DOMMetaViewportFitChanged": {
+        this._sendViewportFitChanged(aEvent.target && aEvent.target.defaultView);
+        break;
+      }
       case "DOMFormHasPassword": {
         let form = aEvent.target;
         let doc = form.ownerDocument;
