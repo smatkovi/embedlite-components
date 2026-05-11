@@ -12,9 +12,10 @@
 ##
 ## Reference: https://www.mozilla.org/styleguide/communications/translation/
 
--brand-short-name = Browser
+-brand-shorter-name = Sailfish Browser
+-brand-short-name = Sailfish Browser
 -brand-full-name = Sailfish Browser
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
--brand-product-name = Browser
+-brand-product-name = Sailfish Browser
 -vendor-short-name = Sailfish
