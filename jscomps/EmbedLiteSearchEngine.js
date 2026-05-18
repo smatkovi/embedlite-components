@@ -25,12 +25,11 @@ EmbedLiteSearchEngine.prototype = {
 
   _initSent: false,
 
-  _notifyInit: function AC_notifyInit() {
-    if (this._initSent) {
+  _notifyInit: function AC_notifyInit(force) {
+    if (this._initSent && !force) {
       return;
     }
 
-    this._initSent = true;
     Services.search.getEngines().then((engines) => {
       let engineNames = engines.map(function (element) {
         return element.name;
@@ -49,9 +48,9 @@ EmbedLiteSearchEngine.prototype = {
         engines: engineNames,
         defaultEngine: defaultEngine ? defaultEngine.name : null
       }
+      this._initSent = true;
       Services.obs.notifyObservers(null, "embed:search", JSON.stringify(messg));
     }, (error) => {
-      this._initSent = false;
       Logger.warn("EmbedLiteSearchEngine init failed:", error);
     });
   },
@@ -74,6 +73,10 @@ EmbedLiteSearchEngine.prototype = {
       case "embedui:search": {
         var data = JSON.parse(aData);
         switch (data.msg) {
+          case "init": {
+            this._notifyInit(true);
+            break;
+          }
           case "loadxml": {
             Services.search.addOpenSearchEngine(data.uri, null).then(
               engine => {
@@ -98,16 +101,41 @@ EmbedLiteSearchEngine.prototype = {
           }
           case "setdefault": {
             var engine = Services.search.getEngineByName(data.name);
-            if (engine) {
-              Services.search.defaultEngine = engine;
-              var message = {
+            if (!engine) {
+              Logger.warn("EmbedLiteSearchEngine could not find engine:", data.name);
+              var missingEngineMessage = {
                 "msg": "search-engine-default-changed",
-                "defaultEngine": (engine && engine.name) || "",
-                "errorCode": 0,
+                "defaultEngine": "",
+                "errorCode": Cr.NS_ERROR_NOT_AVAILABLE,
               }
-
-              Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
+              Services.obs.notifyObservers(null, "embed:search", JSON.stringify(missingEngineMessage));
+              break;
             }
+            Services.search.setDefault(engine, Ci.nsISearchService.CHANGE_REASON_USER).then(
+              () => {
+                try {
+                  Services.prefs.setStringPref("browser.search.defaultenginename", engine.name);
+                  Services.prefs.savePrefFile(null);
+                } catch (e) {
+                  Logger.warn("EmbedLiteSearchEngine failed to save default engine pref:", e);
+                }
+                var message = {
+                  "msg": "search-engine-default-changed",
+                  "defaultEngine": (engine && engine.name) || "",
+                  "errorCode": 0,
+                }
+
+                Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
+              },
+              error => {
+                var message = {
+                  "msg": "search-engine-default-changed",
+                  "defaultEngine": "",
+                  "errorCode": (error && error.result) || Cr.NS_ERROR_FAILURE,
+                }
+                Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
+              }
+            );
             break;
           }
           default:
