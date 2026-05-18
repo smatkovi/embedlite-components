@@ -333,6 +333,172 @@ LoginManagerPrompter.prototype = {
     return idService.generateUUID().toString();
   },
 
+  _getPromptBrowsingContext() {
+    return this._browser?.browsingContext ||
+           this._chromeWindow?.browsingContext ||
+           null;
+  },
+
+  _getAuthMessage(aChannel, aAuthInfo) {
+    let isProxy = aAuthInfo.flags & Ci.nsIAuthInformation.AUTH_PROXY;
+    let isPassOnly = aAuthInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD;
+    let isCrossOrig =
+      aAuthInfo.flags & Ci.nsIAuthInformation.CROSS_ORIGIN_SUB_RESOURCE;
+    let username = aAuthInfo.username;
+    let displayHost;
+    let realm;
+
+    if (isProxy) {
+      if (!(aChannel instanceof Ci.nsIProxiedChannel)) {
+        throw new Error("proxy auth needs nsIProxiedChannel");
+      }
+
+      let info = aChannel.proxyInfo;
+      if (!info) {
+        throw new Error("proxy auth needs nsIProxyInfo");
+      }
+
+      let idnService = Cc["@mozilla.org/network/idn-service;1"].getService(
+        Ci.nsIIDNService
+      );
+      displayHost =
+        "moz-proxy://" +
+        idnService.convertUTF8toACE(info.host) +
+        ":" +
+        info.port;
+      realm = aAuthInfo.realm || displayHost;
+    } else {
+      displayHost = this._getFormattedOrigin(aChannel.URI);
+      realm = aAuthInfo.realm || "";
+    }
+
+    if (realm.length > 150) {
+      realm = realm.substring(0, 150) + this._ellipsis;
+    }
+
+    if (isProxy) {
+      return ["EnterLoginForProxy3", realm, displayHost];
+    } else if (isPassOnly) {
+      return ["EnterPasswordFor", username, displayHost];
+    } else if (isCrossOrig) {
+      return ["EnterUserPasswordForCrossOrigin2", displayHost];
+    } else if (!realm) {
+      return ["EnterUserPasswordFor2", displayHost];
+    }
+    return ["EnterLoginForRealm3", realm, displayHost];
+  },
+
+  _promptAuth(aChannel, aLevel, aAuthInfo, checkboxLabel, checkbox) {
+    return new Promise(resolve => {
+      let browsingContext = this._getPromptBrowsingContext();
+      let win = null;
+      try {
+        win = browsingContext?.top?.window || browsingContext?.window;
+      } catch (e) {}
+
+      if (!win) {
+        win = this._chromeWindow;
+      }
+
+      let winId;
+      try {
+        winId = Services.embedlite.getIDByWindow(win);
+      } catch (e) {
+        this.warn("LoginManagerPrompter: unable to find window id", e);
+        resolve(false);
+        return;
+      }
+
+      if (!winId) {
+        resolve(false);
+        return;
+      }
+
+      let [username, password] = this._GetAuthInfo(aAuthInfo);
+      let isPasswordOnly =
+        aAuthInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD;
+      let payload = {
+        winId,
+        text: this._getAuthMessage(aChannel, aAuthInfo),
+        inputs: [],
+      };
+
+      if (!isPasswordOnly) {
+        payload.inputs.push({
+          type: "textbox",
+          value: username || "",
+          hint: "username",
+          autofocus: true,
+        });
+      }
+      payload.inputs.push({
+        type: "password",
+        value: password || "",
+        hint: "password",
+        autofocus: !!isPasswordOnly,
+      });
+      if (checkboxLabel) {
+        payload.inputs.push({
+          label: checkboxLabel,
+          hint: "remember",
+          checked: !!checkbox.value,
+        });
+      }
+
+      let closed = false;
+      let listener = {
+        QueryInterface: ChromeUtils.generateQI(["nsIEmbedMessageListener"]),
+
+        onMessageReceived: (messageName, message) => {
+          if (closed) {
+            return;
+          }
+          closed = true;
+          Services.embedlite.removeMessageListener("authresponse", listener);
+
+          let response;
+          try {
+            response = JSON.parse(message);
+          } catch (e) {
+            this.warn("LoginManagerPrompter: auth response parsing failed", e);
+            resolve(false);
+            return;
+          }
+
+          if (response.winId != winId || !response.accepted) {
+            resolve(false);
+            return;
+          }
+
+          let responseUsername =
+            "username" in response ? response.username : username;
+          this._SetAuthInfo(
+            aAuthInfo,
+            responseUsername || "",
+            response.password || ""
+          );
+          if ("remember" in response) {
+            checkbox.value = !!response.remember;
+          }
+          resolve(true);
+        },
+      };
+
+      Services.embedlite.addMessageListener("authresponse", listener);
+      try {
+        Services.embedlite.sendAsyncMessage(
+          winId,
+          "embed:auth",
+          JSON.stringify(payload)
+        );
+      } catch (e) {
+        Services.embedlite.removeMessageListener("authresponse", listener);
+        this.warn("LoginManagerPrompter: sending auth prompt failed", e);
+        resolve(false);
+      }
+    });
+  },
+
   __strBundle: null, // String bundle for L10N
   get _strBundle() {
     if (!this.__strBundle) {
@@ -345,6 +511,20 @@ LoginManagerPrompter.prototype = {
     }
 
     return this.__strBundle;
+  },
+
+  __ellipsis: null,
+  get _ellipsis() {
+    if (!this.__ellipsis) {
+      this.__ellipsis = "\u2026";
+      try {
+        this.__ellipsis = Services.prefs.getComplexValue(
+          "intl.ellipsis",
+          Ci.nsIPrefLocalizedString
+        ).data;
+      } catch (e) {}
+    }
+    return this.__ellipsis;
   },
 
 
@@ -766,9 +946,7 @@ LoginManagerPrompter.prototype = {
         );
       }
 
-      ok = await Services.prompt.asyncPromptAuth(
-        this._browser?.browsingContext,
-        LoginManagerPrompter.promptAuthModalType,
+      ok = await this._promptAuth(
         aChannel,
         aLevel,
         aAuthInfo,
@@ -944,9 +1122,15 @@ LoginManagerPrompter.prototype = {
       // needs to be set explicitly using setBrowser
       this._browser = null;
     } else {
-      let { win, browser } = this._getChromeWindow(aWindow);
-      this._chromeWindow = win;
-      this._browser = browser;
+      let chrome = this._getChromeWindow(aWindow);
+      if (chrome) {
+        this._chromeWindow = chrome.win;
+        this._browser = chrome.browser;
+      } else {
+        this.log("LOGIN: unable to find chrome window, using prompt window");
+        this._chromeWindow = aWindow;
+        this._browser = null;
+      }
     }
     this._openerBrowser = null;
     this._factory = aFactory || null;
@@ -1543,13 +1727,6 @@ XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "warn", () => {
   let logger = Logger
   return logger.warn.bind(logger);
 });
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  LoginManagerPrompter,
-  "promptAuthModalType",
-  "prompts.modalType.httpAuth",
-  Services.prompt.MODAL_TYPE_WINDOW
-);
 
 var component = [LoginManagerPromptFactory, LoginManagerPrompter];
 if (ComponentUtils.generateNSGetFactory) {
