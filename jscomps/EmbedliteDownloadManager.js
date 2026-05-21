@@ -346,14 +346,14 @@ DownloadPDFSaver.prototype = {
     // An empty target file must exist for the PDF printer to work correctly.
     await IOUtils.writeUTF8(targetPath, "");
 
-    let printSettings = gPrintSettingsService.newPrintSettings;
+    let printSettings = gPrintSettingsService.createNewPrintSettings();
 
-    printSettings.printToFile = true;
     printSettings.outputFormat = Ci.nsIPrintSettings.kOutputFormatPDF;
+    printSettings.outputDestination =
+      Ci.nsIPrintSettings.kOutputDestinationFile;
     printSettings.toFileName = targetPath;
 
     printSettings.printSilent = true;
-    printSettings.showPrintProgress = false;
 
     printSettings.printBGImages = true;
     printSettings.printBGColors = true;
