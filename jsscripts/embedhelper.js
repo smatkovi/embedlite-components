@@ -562,6 +562,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandl
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js", this);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js", this);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js", this);
+Services.scriptloader.loadSubScript("chrome://embedlite/content/ClipboardReadPasteHelper.js", this);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js", this);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/InputMethodHandler.js", this);
 
