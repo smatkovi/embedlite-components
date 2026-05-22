@@ -9,8 +9,10 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["$EmbedLiteConsoleListener"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(Services, 'env',
@@ -264,4 +266,6 @@ $EmbedLiteConsoleListener.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([$EmbedLiteConsoleListener]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([$EmbedLiteConsoleListener]);
+}

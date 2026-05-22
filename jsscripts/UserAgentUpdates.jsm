@@ -10,24 +10,17 @@
 
 var EXPORTED_SYMBOLS = ["UserAgentUpdates"];
 
-const { AppConstants } = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { AppConstants } = ChromeUtils.importESModule("resource://gre/modules/AppConstants.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Cu.importGlobalProperties(["XMLHttpRequest"]);
 
-ChromeUtils.defineModuleGetter(
-  this, "FileUtils", "resource://gre/modules/FileUtils.jsm");
-
-ChromeUtils.defineModuleGetter(
-  this, "NetUtil", "resource://gre/modules/NetUtil.jsm");
-
-ChromeUtils.defineModuleGetter(
-  this, "OS", "resource://gre/modules/osfile.jsm");
-
-
-ChromeUtils.defineModuleGetter(
-  this, "UpdateUtils", "resource://gre/modules/UpdateUtils.jsm");
+ChromeUtils.defineESModuleGetters(this, {
+  FileUtils: "resource://gre/modules/FileUtils.sys.mjs",
+  NetUtil: "resource://gre/modules/NetUtil.sys.mjs",
+  UpdateUtils: "resource://gre/modules/UpdateUtils.sys.mjs",
+});
 
 XPCOMUtils.defineLazyServiceGetter(
   this, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
@@ -132,7 +125,7 @@ var UserAgentUpdates = {
     dirs.reduce((prevLoad, dir) => {
       let file = FileUtils.getFile(dir, [FILE_UPDATES], true).path;
       // tryNext returns promise to read file under dir and parse it
-      let tryNext = () => OS.File.read(file).then(
+      let tryNext = () => IOUtils.read(file).then(
         (bytes) => {
           let update = JSON.parse(gDecoder.decode(bytes));
           if (!update) {
@@ -162,7 +155,7 @@ var UserAgentUpdates = {
     let file = FileUtils.getFile(KEY_PREFDIR, [FILE_UPDATES], true);
     let path = file.path;
     let bytes = gEncoder.encode(JSON.stringify(update));
-    OS.File.writeAtomic(path, bytes, {tmpPath: path + ".tmp"}).then(
+    IOUtils.write(path, bytes, { tmpPath: path + ".tmp" }).then(
       () => {
         this._lastUpdated = Date.now();
         Services.prefs.setCharPref(

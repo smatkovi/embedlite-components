@@ -31,14 +31,17 @@
 const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
 
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { PrivateBrowsingUtils } = ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
-const { PromptUtils } = ChromeUtils.import("resource://gre/modules/SharedPromptUtils.jsm", {});
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
+const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
+const { PromptUtils } = ChromeUtils.importESModule("resource://gre/modules/PromptUtils.sys.mjs");
+var EXPORTED_SYMBOLS = ["LoginManagerPromptFactory", "LoginManagerPrompter"];
 
-XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
-                                  "resource://gre/modules/LoginHelper.jsm");
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+
+ChromeUtils.defineESModuleGetters(this, {
+  LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
+});
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -1549,5 +1552,6 @@ XPCOMUtils.defineLazyPreferenceGetter(
 );
 
 var component = [LoginManagerPromptFactory, LoginManagerPrompter];
-this.NSGetFactory = ComponentUtils.generateNSGetFactory(component);
-
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory(component);
+}

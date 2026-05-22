@@ -14,23 +14,23 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["EmbedliteDownloadManager"];
 
-XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
-                                  "resource://gre/modules/Downloads.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "Services",
-                                  "resource://gre/modules/Services.jsm");
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
+
+ChromeUtils.defineESModuleGetters(this, {
+  Downloads: "resource://gre/modules/Downloads.sys.mjs",
+});
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
-const { DownloadSaver, DownloadError } = ChromeUtils.import(
-  "resource://gre/modules/DownloadCore.jsm"
-);
-
-XPCOMUtils.defineLazyModuleGetters(this, {
-  OS: "resource://gre/modules/osfile.jsm",
-});
+const {
+  DownloadCopySaver,
+  DownloadSaver,
+  DownloadError,
+} = ChromeUtils.importESModule("resource://gre/modules/DownloadCore.sys.mjs");
 
 XPCOMUtils.defineLazyServiceGetter(
   this,
@@ -39,9 +39,7 @@ XPCOMUtils.defineLazyServiceGetter(
   Ci.nsIPrintSettingsService
 );
 
-const { PrivateBrowsingUtils } = ChromeUtils.import(
-  "resource://gre/modules/PrivateBrowsingUtils.jsm"
-);
+const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadViewer
@@ -290,7 +288,9 @@ EmbedliteDownloadManager.prototype = {
   }
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedliteDownloadManager]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedliteDownloadManager]);
+}
 
 /**
  * This DownloadSaver type creates a PDF file from the current document in a
@@ -344,8 +344,7 @@ DownloadPDFSaver.prototype = {
     let targetPath = this.download.target.path;
 
     // An empty target file must exist for the PDF printer to work correctly.
-    let file = await OS.File.open(targetPath, { truncate: true });
-    await file.close();
+    await IOUtils.writeUTF8(targetPath, "");
 
     let printSettings = gPrintSettingsService.newPrintSettings;
 
@@ -382,7 +381,7 @@ DownloadPDFSaver.prototype = {
       this._browsingContext = null;
     }
 
-    let fileInfo = await OS.File.stat(targetPath);
+    let fileInfo = await IOUtils.stat(targetPath);
     aSetProgressBytesFn(fileInfo.size, fileInfo.size, false);
   },
 

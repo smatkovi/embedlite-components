@@ -15,7 +15,6 @@ jsscripts_manifest_DATA = \
 	Util.js \
 	ClickEventBlocker.js \
 	ContextMenuHandler.js \
-	Prompt.jsm \
 	NetErrorHelper.jsm \
 	$(NULL)
 

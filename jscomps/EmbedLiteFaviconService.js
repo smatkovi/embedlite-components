@@ -6,12 +6,15 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["EmbedLiteFaviconService"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
-                                  "resource://gre/modules/NetUtil.jsm");
+ChromeUtils.defineESModuleGetters(this, {
+  NetUtil: "resource://gre/modules/NetUtil.sys.mjs",
+});
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                    "@mozilla.org/embedlite-app-service;1",
                                    "nsIEmbedAppService");
@@ -182,4 +185,6 @@ EmbedLiteFaviconService.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteFaviconService]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteFaviconService]);
+}

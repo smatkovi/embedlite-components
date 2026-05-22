@@ -6,13 +6,13 @@
 
 var EXPORTED_SYMBOLS = [ "ContentLinkHandler" ];
 
-ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "Feeds",
   "chrome://embedlite/content/Feeds.jsm");
-ChromeUtils.defineModuleGetter(this, "BrowserUtils",
-  "resource://gre/modules/BrowserUtils.jsm");
+ChromeUtils.defineESModuleGetters(this, {
+  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
+});
 
 const SIZES_TELEMETRY_ENUM = {
   NO_SIZES: 0,

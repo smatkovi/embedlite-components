@@ -6,15 +6,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-Components.utils.import("resource://gre/modules/Services.jsm");
-let makeURI = Components.utils.import("resource://gre/modules/BrowserUtils.jsm", {}).BrowserUtils.makeURI;
+(function(global) {
+var Services = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
+var BrowserUtils = ChromeUtils.importESModule(
+  "resource://gre/modules/BrowserUtils.sys.mjs"
+).BrowserUtils;
+var makeURI = BrowserUtils.makeURI;
 
-var ClickEventBlocker = {
-  _context: null,
-  _allowNavigationInSameOrigin: false,
-  _rootOrigin: null,
+var ClickEventBlocker = global.ClickEventBlocker || {};
+
+Object.assign(ClickEventBlocker, {
+  _context: ClickEventBlocker._context || null,
+  _allowNavigationInSameOrigin: ClickEventBlocker._allowNavigationInSameOrigin || false,
+  _rootOrigin: ClickEventBlocker._rootOrigin || null,
 
   init: function init(context, params) {
+    if (this._context) {
+      Services.els.removeSystemEventListener(this._context, "click", this, true);
+    }
     this._context = context;
     this._allowNavigationInSameOrigin = params && params.allowNavigationInSameOrigin;
     Services.els.addSystemEventListener(context, "click", this, true);
@@ -133,4 +142,7 @@ var ClickEventBlocker = {
     }
     return [null, null, false];
   }
-};
+});
+
+global.ClickEventBlocker = ClickEventBlocker;
+})(this);

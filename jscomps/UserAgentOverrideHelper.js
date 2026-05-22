@@ -14,8 +14,10 @@ const VIEW_UA_CHANGED           = "embedliteviewhttpuseragentchanged";
 const XPCOM_SHUTDOWN            = "xpcom-shutdown";
 const PREF_OVERRIDE             = "general.useragent.override";
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["UserAgentOverrideHelper"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { UserAgentOverrides } = ChromeUtils.import("chrome://embedlite/content/UserAgentOverrides.jsm");
 
@@ -73,8 +75,7 @@ UserAgentOverrideHelper.prototype = {
     }
   },
 
-  QueryInterface: ChromeUtils.generateQI([Ci.nsISiteSpecificUserAgent, Ci.nsIObserver,
-                                         Ci.nsISupportsWeakReference, Ci.nsIFormSubmitObserver])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
 var UserAgent = {
@@ -285,4 +286,6 @@ var UserAgent = {
   }
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([UserAgentOverrideHelper]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([UserAgentOverrideHelper]);
+}

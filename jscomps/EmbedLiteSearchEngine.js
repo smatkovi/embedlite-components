@@ -6,8 +6,10 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["EmbedLiteSearchEngine"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
@@ -21,6 +23,39 @@ function EmbedLiteSearchEngine()
 EmbedLiteSearchEngine.prototype = {
   classID: Components.ID("{924fe7ba-afa1-11e2-9d4f-533572064b73}"),
 
+  _initSent: false,
+
+  _notifyInit: function AC_notifyInit() {
+    if (this._initSent) {
+      return;
+    }
+
+    this._initSent = true;
+    Services.search.getEngines().then((engines) => {
+      let engineNames = engines.map(function (element) {
+        return element.name;
+      });
+      let enginesAvailable = (engines && engines.length > 0);
+      let defaultEngine = null;
+      if (enginesAvailable) {
+        try {
+          defaultEngine = Services.search.defaultEngine;
+        } catch (e) {
+          Logger.warn("EmbedLiteSearchEngine failed to get default engine:", e);
+        }
+      }
+      var messg = {
+        msg: "init",
+        engines: engineNames,
+        defaultEngine: defaultEngine ? defaultEngine.name : null
+      }
+      Services.obs.notifyObservers(null, "embed:search", JSON.stringify(messg));
+    }, (error) => {
+      this._initSent = false;
+      Logger.warn("EmbedLiteSearchEngine init failed:", error);
+    });
+  },
+
   observe: function (aSubject, aTopic, aData) {
     switch(aTopic) {
       // Engine DownloadManager notifications
@@ -28,22 +63,12 @@ EmbedLiteSearchEngine.prototype = {
         Services.obs.addObserver(this, "xpcom-shutdown", true);
         Services.obs.addObserver(this, "embedui:search", true);
         Services.obs.addObserver(this, "profile-after-change", false);
+        this._notifyInit();
         break;
       }
       case "profile-after-change": {
         Services.obs.removeObserver(this, "profile-after-change");
-        Services.search.getEngines().then((engines) => {
-          let engineNames = engines.map(function (element) {
-            return element.name;
-          });
-          let enginesAvailable = (engines && engines.length > 0);
-          var messg = {
-            msg: "init",
-            engines: engineNames,
-            defaultEngine: enginesAvailable && Services.search.defaultEngine ? Services.search.defaultEngine.name : null
-          }
-          Services.obs.notifyObservers(null, "embed:search", JSON.stringify(messg));
-        });
+        this._notifyInit();
         break;
       }
       case "embedui:search": {
@@ -104,4 +129,6 @@ EmbedLiteSearchEngine.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteSearchEngine]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteSearchEngine]);
+}

@@ -5,22 +5,24 @@
  * Copyright (c) 2020 Open Mobile Platform LLC.
  */
 
-Components.utils.import("resource://gre/modules/Services.jsm");
+var LoggerServices = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 
-var EXPORTED_SYMBOLS = [ "Logger" ];
+if (typeof EXPORTED_SYMBOLS == "undefined") {
+  var EXPORTED_SYMBOLS = [ "Logger" ];
+}
 
-let Logger = {
+var Logger = {
   _enabled: false,
   _consoleEnv: null,
 
   init: function doInit() {
     try {
-      this._consoleEnv = Services.env.get("EMBED_CONSOLE");
+      this._consoleEnv = LoggerServices.env.get("EMBED_CONSOLE");
     } catch (e) {}
 
     let consolePref = false;
     try {
-      consolePref = Services.prefs.getIntPref("embedlite.console_log.enabled");
+      consolePref = LoggerServices.prefs.getIntPref("embedlite.console_log.enabled");
     } catch (e) { /*pref is missing*/ }
 
     this._enabled = this._consoleEnv || consolePref || false;

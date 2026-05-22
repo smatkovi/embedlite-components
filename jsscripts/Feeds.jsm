@@ -6,10 +6,11 @@
 
 var EXPORTED_SYMBOLS = [ "Feeds" ];
 
-ChromeUtils.defineModuleGetter(this, "BrowserUtils",
-                               "resource://gre/modules/BrowserUtils.jsm");
-ChromeUtils.defineModuleGetter(this, "RecentWindow",
-                               "resource:///modules/RecentWindow.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+
+ChromeUtils.defineESModuleGetters(this, {
+  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
+});
 
 var Feeds = {
   // Listeners are added in nsBrowserGlue.js
@@ -40,9 +41,14 @@ var Feeds = {
       }
 
       case "FeedConverter:addLiveBookmark": {
-        let topWindow = RecentWindow.getMostRecentBrowserWindow();
-        topWindow.PlacesCommandHook.addLiveBookmark(data.spec, data.title, data.subtitle)
-                                   .catch(Cu.reportError);
+        let topWindow = Services.wm.getMostRecentWindow("navigator:browser");
+        if (topWindow?.PlacesCommandHook?.addLiveBookmark) {
+          topWindow.PlacesCommandHook.addLiveBookmark(
+            data.spec,
+            data.title,
+            data.subtitle
+          ).catch(Cu.reportError);
+        }
         break;
       }
     }

@@ -6,35 +6,33 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
+var EXPORTED_SYMBOLS = ["EmbedLiteGlobalHelper"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { LoginManagerParent } = ChromeUtils.import("resource://gre/modules/LoginManagerParent.jsm");
-const { L10nRegistry, FileSource } = ChromeUtils.import("resource://gre/modules/L10nRegistry.jsm");
-
-// Touch the recipeParentPromise lazy getter so we don't get
-// `this._recipeManager is undefined` errors during tests.
-// Inspered by browser/components/extensions/test/browser/head.js
-void LoginManagerParent.recipeParentPromise;
-
-ChromeUtils.defineModuleGetter(
-  this,
-  "ActorManagerParent",
-  "resource://gre/modules/ActorManagerParent.jsm"
-);
+const { LoginManagerParent } = ChromeUtils.importESModule("resource://gre/modules/LoginManagerParent.sys.mjs");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+
+// Register ESR115 JSWindowActors in the parent process. EmbedLite does not run
+// Firefox's normal browser chrome bootstrap that would otherwise do this.
+ChromeUtils.importESModule("resource://gre/modules/ActorManagerParent.sys.mjs");
+
+// Keep the recipe manager eagerly initialized for password-manager queries.
+void LoginManagerParent.recipeParentPromise;
 
 // Common helper service
 
 function EmbedLiteGlobalHelper()
 {
-  // Touch ActorManagerParent so that it gets initialised
-  var actor = ActorManagerParent;
-
-  L10nRegistry.registerSources([new FileSource(
-                                   "0-mozembedlite",
-                                   ["en-US", "fi", "ru"],
-                                   "chrome://browser/content/localization/{locale}/")])
+  if (typeof L10nRegistry != "undefined" && typeof L10nFileSource != "undefined") {
+    L10nRegistry.getInstance().registerSources([new L10nFileSource(
+      "0-mozembedlite",
+      "app",
+      ["en-US", "fi", "ru"],
+      "chrome://browser/content/localization/{locale}/"
+    )]);
+  }
 
   Logger.debug("JSComp: EmbedLiteGlobalHelper.js loaded");
 }
@@ -62,30 +60,6 @@ EmbedLiteGlobalHelper.prototype = {
         break;
       }
       case "profile-after-change": {
-        // Init LoginManager
-        try {
-          Cc["@mozilla.org/login-manager;1"].getService(Ci.nsILoginManager);
-          // Bug 1531959 - Change all RemoteLogins message names to PasswordManager in pwmgr code
-          // https://github.com/sailfishos-mirror/gecko-dev/commit/1371a0545cdd9323b5a6fea14ad3a78658c9bace)
-          // Bug 1527828 - Remove insecure password field detection code for the address bar
-          // https://github.com/sailfishos-mirror/gecko-dev/commit/87888ef23587b953bd3045f745d74ab6c9d010eb
-          // Bug 1567175, support password manager in out of process iframes
-          // https://github.com/sailfishos-mirror/gecko-dev/commit/7410901165d99b03feb66a67d2fe7a114e251f0f
-
-          var globalMM = Services.mm;
-
-          // TODO: Check / verify tht login manager works as it should (JB#55397 / JOLLA-337).
-          // Bug 1567175, support password manager in out of process iframes
-          // https://github.com/sailfishos-mirror/gecko-dev/commit/7410901165d99b03feb66a67d2fe7a114e251f0f
-
-          globalMM.addMessageListener("PasswordManager:findLogins", LoginManagerParent);
-          globalMM.addMessageListener("PasswordManager:findRecipes", LoginManagerParent);
-          globalMM.addMessageListener("PasswordManager:onFormSubmit", LoginManagerParent);
-          globalMM.addMessageListener("PasswordManager:autoCompleteLogins", LoginManagerParent);
-          globalMM.addMessageListener("PasswordManager:removeLogin", LoginManagerParent);
-        } catch (e) {
-          Logger.warn("E login manager:", e);
-        }
         break;
       }
       case "xpcom-shutdown": {
@@ -103,7 +77,9 @@ EmbedLiteGlobalHelper.prototype = {
       return;
   },
 
-  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference, Ci.nsIFormSubmitObserver])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteGlobalHelper]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteGlobalHelper]);
+}

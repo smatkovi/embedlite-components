@@ -6,13 +6,16 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { PrivateBrowsingUtils } = ChromeUtils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
+var EXPORTED_SYMBOLS = ["EmbedLiteErrorPageHandler"];
 
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
-                                  "resource://gre/modules/NetUtil.jsm");
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
+
+ChromeUtils.defineESModuleGetters(this, {
+  NetUtil: "resource://gre/modules/NetUtil.sys.mjs",
+});
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                    "@mozilla.org/embedlite-app-service;1",
                                    "nsIEmbedAppService");
@@ -174,4 +177,6 @@ var ErrorPageEventHandler = {
 };
 
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteErrorPageHandler]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteErrorPageHandler]);
+}
