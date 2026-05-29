@@ -10,8 +10,10 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/XPCOMUtils.sys.mjs"
+);
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/util.js");

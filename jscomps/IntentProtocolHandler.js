@@ -10,8 +10,10 @@
 
 const {classes: Cc, interfaces: Ci, results: Cr} = Components;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import('resource://gre/modules/XPCOMUtils.jsm');
+var EXPORTED_SYMBOLS = ["IntentProtocolHandler"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 function IntentProtocolHandler() {
 }
@@ -32,4 +34,6 @@ IntentProtocolHandler.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIProtocolHandler])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([IntentProtocolHandler]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([IntentProtocolHandler]);
+}

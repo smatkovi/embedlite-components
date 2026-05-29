@@ -11,13 +11,15 @@ const PREF_BD_USEDOWNLOADDIR = "browser.download.useDownloadDir";
 const PREF_BD_DOWNLOADDIR = "browser.download.dir";
 const URI_GENERIC_ICON_DOWNLOAD = "drawable://alert_download";
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["HelperAppLauncherDialog"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-const { DownloadPaths } = ChromeUtils.import("resource://gre/modules/DownloadPaths.jsm");
-const { Downloads } = ChromeUtils.import("resource://gre/modules/Downloads.jsm");
-const { FileUtils } = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+const { DownloadPaths } = ChromeUtils.importESModule("resource://gre/modules/DownloadPaths.sys.mjs");
+const { Downloads } = ChromeUtils.importESModule("resource://gre/modules/Downloads.sys.mjs");
+const { FileUtils } = ChromeUtils.importESModule("resource://gre/modules/FileUtils.sys.mjs");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -169,4 +171,6 @@ HelperAppLauncherDialog.prototype = {
   },
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([HelperAppLauncherDialog]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([HelperAppLauncherDialog]);
+}

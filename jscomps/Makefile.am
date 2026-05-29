@@ -2,7 +2,6 @@ jscomps_manifestdir=$(libdir)/mozembedlite/components
 jscomps_manifest_DATA = \
 	EmbedLiteJSComponents.manifest \
 	AboutRedirector.js \
-	AlertsService.js \
 	LoginManagerPrompter.js \
 	HelperAppDialog.js \
 	EmbedPrefService.js \
@@ -19,7 +18,6 @@ jscomps_manifest_DATA = \
 	EmbedLiteErrorPageHandler.js \
 	UserAgentOverrideHelper.js \
 	XPIDialogService.js \
-	PromptService.js \
 	PrivateDataManager.js \
 	EmbedliteDownloadManager.js \
 	LoginsHelper.js \

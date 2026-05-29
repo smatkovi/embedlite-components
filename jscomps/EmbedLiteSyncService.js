@@ -6,29 +6,37 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["EmbedLiteSyncService"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
-function EmbedLiteSyncServiceImpotUtils()
+function importSyncModules()
 {
-    ChromeUtils.import("resource://services-common/log4moz.js");
-    ChromeUtils.import("resource://services-sync/main.js");
-    ChromeUtils.import("resource://services-sync/constants.js");
-    ChromeUtils.import("resource://services-sync/service.js");
-    ChromeUtils.import("resource://services-sync/policies.js");
-    ChromeUtils.import("resource://services-sync/util.js");
-    ChromeUtils.import("resource://services-sync/engines.js");
-    ChromeUtils.import("resource://services-sync/record.js");
-    ChromeUtils.import("resource://services-sync/engines/history.js");
-    ChromeUtils.import("resource://services-sync/engines/apps.js");
-    ChromeUtils.import("resource://services-sync/engines/forms.js");
-    ChromeUtils.import("resource://services-sync/engines/passwords.js");
-    ChromeUtils.import("resource://services-sync/engines/prefs.js");
-    ChromeUtils.import("resource://services-sync/engines/tabs.js");
-    ChromeUtils.import("chrome://embedlite/content/sync/bookmarks.js");
+    try {
+      ChromeUtils.import("resource://services-common/log4moz.js");
+      ChromeUtils.import("resource://services-sync/main.js");
+      ChromeUtils.import("resource://services-sync/constants.js");
+      ChromeUtils.import("resource://services-sync/service.js");
+      ChromeUtils.import("resource://services-sync/policies.js");
+      ChromeUtils.import("resource://services-sync/util.js");
+      ChromeUtils.import("resource://services-sync/engines.js");
+      ChromeUtils.import("resource://services-sync/record.js");
+      ChromeUtils.import("resource://services-sync/engines/history.js");
+      ChromeUtils.import("resource://services-sync/engines/apps.js");
+      ChromeUtils.import("resource://services-sync/engines/forms.js");
+      ChromeUtils.import("resource://services-sync/engines/passwords.js");
+      ChromeUtils.import("resource://services-sync/engines/prefs.js");
+      ChromeUtils.import("resource://services-sync/engines/tabs.js");
+      ChromeUtils.import("chrome://embedlite/content/sync/bookmarks.js");
+      return true;
+    } catch (e) {
+      Logger.warn("Failed to import Firefox Sync modules", e);
+      return false;
+    }
 }
 
 // Common helper service
@@ -54,7 +62,9 @@ EmbedLiteSyncService.prototype = {
       case "embedui:initsync": {
         Logger.debug("EmbedLiteSyncService embedui:initsync");
         var data = JSON.parse(aData);
-        EmbedLiteSyncServiceImpotUtils();
+        if (!importSyncModules()) {
+          return;
+        }
         Service.login(data.username, data.password, data.key);
         //this.embedLiteSyncServiceFetchBookmarks();
         //this.embedLiteSyncServiceFetchHistory();
@@ -117,4 +127,6 @@ EmbedLiteSyncService.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteSyncService]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteSyncService]);
+}

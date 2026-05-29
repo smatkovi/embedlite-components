@@ -4,10 +4,12 @@
 
 // Ported from Android FF esr60 sha1 c714053d73ac408ab402bb4d7e906e718f4ecb7e
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["FilePicker"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { FileUtils } = ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+const { FileUtils } = ChromeUtils.importESModule("resource://gre/modules/FileUtils.sys.mjs");
 
 Cu.importGlobalProperties(['File']);
 
@@ -315,4 +317,6 @@ FilePicker.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIFilePicker, Ci.nsIEmbedMessageListener])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([FilePicker]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([FilePicker]);
+}

@@ -6,14 +6,15 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["EmbedPrefService"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 // -----------------------------------------------------------------------
-// Interface for requesting information on prefs values ​​and setting them
+// Interface for requesting and setting preference values
 // -----------------------------------------------------------------------
 
 function EmbedPrefService()
@@ -24,10 +25,20 @@ function EmbedPrefService()
 EmbedPrefService.prototype = {
   classID: Components.ID("{4c5563a0-94eb-11e2-a5f4-7f3c5758e2ae}"),
 
-  _getPrefs: function AC_getPrefs() {
-    let list = Services.prefs.getChildList("", {}).filter(function(element) {
+  _savePrefs: function AC_savePrefs() {
+    try {
+      Services.prefs.savePrefFile(null);
+    } catch (e) {
+      Logger.warn("EmbedPrefService failed to save prefs:", e);
+    }
+  },
+
+  _getPrefs: function AC_getPrefs(aFilter) {
+    let filter = aFilter ? aFilter.toLowerCase() : "";
+    let list = Services.prefs.getChildList("").filter(function(element) {
       // Avoid displaying "private" preferences
-      return !(/^capability\./.test(element));
+      return !(/^capability\./.test(element))
+             && (!filter || element.toLowerCase().includes(filter));
     });
 
     let prefs = list.sort().map(this._getPref, this);
@@ -63,7 +74,6 @@ EmbedPrefService.prototype = {
 
   observe: function (aSubject, aTopic, aData) {
     switch(aTopic) {
-      // Engine DownloadManager notifications
       case "app-startup": {
         Logger.debug("EmbedPrefService app-startup");
         Services.obs.addObserver(this, "embedui:prefs", true);
@@ -76,42 +86,44 @@ EmbedPrefService.prototype = {
         break;
       }
       case "embedui:prefs": {
-        var data = JSON.parse(aData);
+        let data = JSON.parse(aData);
         Logger.debug("UI Wants some prefs back:", data.msg);
         let retPrefs = [];
         for (let pref of data.prefs) {
-            Logger.debug("pref:", pref);
-            switch (Services.prefs.getPrefType(pref)) {
-                case Services.prefs.PREF_BOOL:
-                    retPrefs.push({ name: pref, value: Services.prefs.getBoolPref(pref)});
-                    break;
-                case Services.prefs.PREF_INT:
-                    retPrefs.push({ name: pref, value: Services.prefs.getIntPref(pref)});
-                    break;
-                case Services.prefs.PREF_STRING:
-                    retPrefs.push({ name: pref, value: Services.prefs.getStringPref(pref)});
-                    break;
-                case Services.prefs.PREF_INVALID:
-                    continue;
-            }
+          Logger.debug("pref:", pref);
+          switch (Services.prefs.getPrefType(pref)) {
+            case Ci.nsIPrefBranch.PREF_BOOL:
+              retPrefs.push({ name: pref, value: Services.prefs.getBoolPref(pref) });
+              break;
+            case Ci.nsIPrefBranch.PREF_INT:
+              retPrefs.push({ name: pref, value: Services.prefs.getIntPref(pref) });
+              break;
+            case Ci.nsIPrefBranch.PREF_STRING:
+              retPrefs.push({ name: pref, value: Services.prefs.getStringPref(pref) });
+              break;
+            case Ci.nsIPrefBranch.PREF_INVALID:
+              continue;
+          }
         }
         Services.obs.notifyObservers(null, "embed:prefs", JSON.stringify(retPrefs));
         break;
       }
       case "embedui:saveprefs": {
-        Services.prefs.savePrefFile(null);
+        this._savePrefs();
         break;
       }
       case "embedui:allprefs": {
-        let prefs = this._getPrefs()
+        let data = JSON.parse(aData || "{}");
+        let prefs = this._getPrefs(data.filter);
         Services.obs.notifyObservers(null, "embed:allprefs", JSON.stringify(prefs));
         break;
       }
       case "embedui:clearprefs": {
         let prefs = JSON.parse(aData).prefs;
-        for (var i in prefs) {
-          Services.prefs.clearUserPref(prefs[i]);
+        for (let pref of prefs) {
+          Services.prefs.clearUserPref(pref);
         }
+        this._savePrefs();
         break;
       }
       case "embed:addPrefChangedObserver": {
@@ -131,21 +143,22 @@ EmbedPrefService.prototype = {
       }
       case "embedui:setprefs": {
         let prefs = JSON.parse(aData).prefs;
-        for (var i in prefs) {
-          switch (typeof(prefs[i].value)) {
+        for (let pref of prefs) {
+          switch (typeof(pref.value)) {
             case "string":
-            Services.prefs.setStringPref(prefs[i].name, prefs[i].value);
-            break;
-          case "number":
-            Services.prefs.setIntPref(prefs[i].name, prefs[i].value);
-            break;
-          case "boolean":
-            Services.prefs.setBoolPref(prefs[i].name, prefs[i].value);
-            break;
-          default:
-            throw new Error("Unexpected value type: " + typeof(prefs[i].value));
+              Services.prefs.setStringPref(pref.name, pref.value);
+              break;
+            case "number":
+              Services.prefs.setIntPref(pref.name, pref.value);
+              break;
+            case "boolean":
+              Services.prefs.setBoolPref(pref.name, pref.value);
+              break;
+            default:
+              throw new Error("Unexpected value type: " + typeof(pref.value));
           }
         }
+        this._savePrefs();
         break;
       }
     }
@@ -154,4 +167,6 @@ EmbedPrefService.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedPrefService]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedPrefService]);
+}

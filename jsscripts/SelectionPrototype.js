@@ -16,7 +16,7 @@ this.kChromeSelector = 1;
 this.kContentSelector = 2;
 
 // Define elements that bound phone number containers.
-const PHONE_NUMBER_CONTAINERS = "td,div";
+var PHONE_NUMBER_CONTAINERS = "td,div";
 
 Logger.debug("JSScript: SelectionPrototype.js loaded");
 

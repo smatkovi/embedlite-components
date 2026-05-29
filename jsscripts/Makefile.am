@@ -10,12 +10,12 @@ jsscripts_manifest_DATA = \
 	UserAgentUpdates.jsm \
 	UserAgentOverrides.jsm \
 	SelectAsyncHelper.js \
+	ClipboardReadPasteHelper.js \
 	SelectionHandler.js \
 	SelectionPrototype.js \
 	Util.js \
 	ClickEventBlocker.js \
 	ContextMenuHandler.js \
-	Prompt.jsm \
 	NetErrorHelper.jsm \
 	$(NULL)
 

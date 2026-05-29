@@ -11,8 +11,10 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-const { ComponentUtils } = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var EXPORTED_SYMBOLS = ["EmbedLiteChromeManager"];
+
+const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { NetErrorHelper } = ChromeUtils.import("chrome://embedlite/content/NetErrorHelper.jsm")
 
@@ -36,6 +38,8 @@ function EmbedLiteChromeListener(aWindow)
   // Services.embedlite.getContentWindowByID will return the same as aWindow
   this.targetDOMWindow = aWindow;
   this.docShell = aWindow.docShell;
+  this.blockedPopups = {};
+  this.nextBlockedPopupId = 0;
   ContentLinkHandler.init(this);
 }
 
@@ -44,6 +48,8 @@ EmbedLiteChromeListener.prototype = {
   docShell: null,
   windowId: -1,
   userRequested: "",
+  blockedPopups: null,
+  nextBlockedPopupId: 0,
 
   // -------------------------------------------------------------------------
   // Added call through function to mimic chrome and satisfy ContentLinkHandler
@@ -99,21 +105,66 @@ EmbedLiteChromeListener.prototype = {
       message["type"] = event.type;
       break;
     case "DOMPopupBlocked":
-      let permissions = Services.perms.getAllForPrincipal(Services.scriptSecurityManager.createContentPrincipal(event.popupWindowURI, {}));
-      for (let permission of permissions) {
-        if (permission.type == "popup" && permission.capability == Ci.nsIPermissionManager.DENY_ACTION) {
-          // Ignore popup
-          return;
+      let requestingWindow = event.requestingWindow || this.targetDOMWindow;
+      let requestingDocument = requestingWindow && requestingWindow.document;
+      let requestingPrincipal = requestingDocument && requestingDocument.nodePrincipal;
+      if (requestingPrincipal) {
+        let permissions = Services.perms.getAllForPrincipal(requestingPrincipal);
+        for (let permission of permissions) {
+          if (permission.type == "popup" && permission.capability == Ci.nsIPermissionManager.DENY_ACTION) {
+            // Ignore popup
+            return;
+          }
         }
       }
+
+      let popupUriSpec = event.popupWindowURI ? event.popupWindowURI.spec : "about:blank";
+      let popupId = ++this.nextBlockedPopupId;
+      this.blockedPopups[popupId] = {
+        "requestingWindow": requestingWindow,
+        "requestingDocument": requestingDocument,
+        "popupWindowURISpec": popupUriSpec,
+        "popupWindowName": event.popupWindowName || "",
+        "popupWindowFeatures": event.popupWindowFeatures || ""
+      };
+
       messageName = "embed:popupblocked";
-      message["host"] = event.popupWindowURI.displaySpec;
+      message["host"] = requestingDocument && requestingDocument.documentURIObject
+                      ? requestingDocument.documentURIObject.displaySpec
+                      : popupUriSpec;
+      message["popupUri"] = popupUriSpec;
+      message["popupId"] = popupId;
+      message["winId"] = this.windowId;
       break;
     }
 
     if (messageName) {
       this.sendAsyncMessage(messageName, message);
     }
+  },
+
+  unblockPopup(popupId) {
+    let popup = this.blockedPopups[popupId];
+    delete this.blockedPopups[popupId];
+
+    if (!popup || !popup.requestingWindow) {
+      return;
+    }
+
+    try {
+      if (popup.requestingWindow.document == popup.requestingDocument) {
+        popup.requestingWindow.open(
+          popup.popupWindowURISpec,
+          popup.popupWindowName,
+          popup.popupWindowFeatures);
+      }
+    } catch (e) {
+      Logger.warn("EmbedLiteChromeListener: opening blocked popup failed", e);
+    }
+  },
+
+  removeBlockedPopup(popupId) {
+    delete this.blockedPopups[popupId];
   },
 
   QueryInterface: ChromeUtils.generateQI([Ci.nsIDOMEventListener,
@@ -136,6 +187,32 @@ EmbedLiteChromeManager.prototype = {
     Services.obs.addObserver(this, "embed-network-link-status", true)
     Services.obs.addObserver(this, "domwindowclosed", true);
     Services.obs.addObserver(this, "keyword-uri-fixup", true);
+    Services.obs.addObserver(this, "embedui:popupblocked", true);
+  },
+
+  onPopupBlockedResponse(message) {
+    let data;
+    try {
+      data = JSON.parse(message);
+    } catch (e) {
+      Logger.warn("EmbedLiteChromeManager: popup response parsing failed", e);
+      return;
+    }
+
+    if (!data || data.popupId === undefined || data.winId === undefined) {
+      return;
+    }
+
+    let listener = this._chromeListeners[data.winId];
+    if (!listener) {
+      return;
+    }
+
+    if (data.allow) {
+      listener.unblockPopup(data.popupId);
+    } else {
+      listener.removeBlockedPopup(data.popupId);
+    }
   },
 
   onWindowOpen(aWindow) {
@@ -160,14 +237,15 @@ EmbedLiteChromeManager.prototype = {
     let chromeEventHandler = Services.embedlite.chromeEventHandler(aWindow);
     let windowId = Services.embedlite.getIDByWindow(aWindow);
     let chromeListener = this._chromeListeners[windowId];
-    if (chromeEventHandler) {
+    if (chromeEventHandler && chromeListener) {
       chromeEventHandler.removeEventListener("DOMContentLoaded", chromeListener, false);
-      chromeEventHandler.addEventListener("DOMWillOpenModalDialog", chromeListener, false);
-      chromeEventHandler.addEventListener("DOMModalDialogClosed", chromeListener, false);
-      chromeEventHandler.addEventListener("DOMWindowClose", chromeListener, false);
-      chromeEventHandler.addEventListener("DOMMetaAdded", chromeListener, false);
+      chromeEventHandler.removeEventListener("DOMWillOpenModalDialog", chromeListener, false);
+      chromeEventHandler.removeEventListener("DOMModalDialogClosed", chromeListener, false);
+      chromeEventHandler.removeEventListener("DOMWindowClose", chromeListener, false);
+      chromeEventHandler.removeEventListener("DOMMetaAdded", chromeListener, false);
+      chromeEventHandler.removeEventListener("DOMPopupBlocked", chromeListener, false);
     } else {
-      Logger.warn("Something went wrong, could not get chrome event handler for window", aWindow, "id:", chromeListener.windowId, "when opening a window")
+      Logger.warn("Something went wrong, could not get chrome event handler/listener for window", aWindow, "id:", windowId, "when closing a window")
     }
     if (this._lastCreatedWindowId === windowId) {
       this._lastCreatedWindowId = 0;
@@ -178,6 +256,9 @@ EmbedLiteChromeManager.prototype = {
   observe(aSubject, aTopic, aData) {
     let self = this;
     switch (aTopic) {
+    case "embedui:popupblocked":
+      self.onPopupBlockedResponse(aData);
+      break;
     case "keyword-uri-fixup":
       var windowId = this._lastCreatedWindowId;
       try {
@@ -211,7 +292,10 @@ EmbedLiteChromeManager.prototype = {
     }
   },
 
-  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
+  QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
+                                          Ci.nsISupportsWeakReference])
 };
 
-this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteChromeManager]);
+if (ComponentUtils.generateNSGetFactory) {
+  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteChromeManager]);
+}

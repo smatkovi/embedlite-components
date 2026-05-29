@@ -22,6 +22,6 @@ config.status
 config.sub
 configure
 depcomp
-documentation.list
+/*.list
 install-sh
 

@@ -20,10 +20,8 @@ mkdir -p $TARGET_DIR/components
 FILES_LIST="
 jscomps/EmbedLiteJSComponents.manifest
 jscomps/AboutRedirector.js
-jscomps/AlertsService.js
 jscomps/LoginManagerPrompter.js
 jscomps/HelperAppDialog.js
-jscomps/EmbedPrefService.js
 jscomps/FilePicker.js
 jscomps/ContentPermissionPrompt.js
 jscomps/ContentPermissionManager.js
@@ -36,8 +34,6 @@ jscomps/EmbedLiteSearchEngine.js
 jscomps/EmbedLiteErrorPageHandler.js
 jscomps/UserAgentOverrideHelper.js
 jscomps/XPIDialogService.js
-jscomps/EmbedLiteWebAppInstall.js
-jscomps/PromptService.js
 jscomps/PrivateDataManager.js
 jscomps/EmbedliteDownloadManager.js
 jscomps/EmbedLiteWebrtcUI.js
@@ -59,8 +55,8 @@ ln -s $(pwd)/jsscripts/embedhelper.js $TARGET_DIR/chrome/embedlite/content/embed
 ln -s $(pwd)/jsscripts/OrientationChangeHandler.jsm $TARGET_DIR/chrome/embedlite/content/OrientationChangeHandler.jsm;
 ln -s $(pwd)/jsscripts/UserAgentUpdates.jsm $TARGET_DIR/chrome/embedlite/content/UserAgentUpdates.jsm;
 ln -s $(pwd)/jsscripts/UserAgentOverrides.jsm $TARGET_DIR/chrome/embedlite/content/UserAgentOverrides.jsm;
-ln -s $(pwd)/jsscripts/Prompt.jsm $TARGET_DIR/chrome/embedlite/content/Prompt.jsm;
 ln -s $(pwd)/jsscripts/SelectAsyncHelper.js $TARGET_DIR/chrome/embedlite/content/SelectAsyncHelper.js;
+ln -s $(pwd)/jsscripts/ClipboardReadPasteHelper.js $TARGET_DIR/chrome/embedlite/content/ClipboardReadPasteHelper.js;
 ln -s $(pwd)/jsscripts/SelectionHandler.js $TARGET_DIR/chrome/embedlite/content/SelectionHandler.js;
 ln -s $(pwd)/jsscripts/SelectionPrototype.js $TARGET_DIR/chrome/embedlite/content/SelectionPrototype.js;
 ln -s $(pwd)/jsscripts/Util.js $TARGET_DIR/chrome/embedlite/content/Util.js;

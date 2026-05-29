@@ -5,46 +5,28 @@
 "use strict";
 
 let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
-const { XPCOMUtils } = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.import("resource://gre/modules/Geometry.jsm");
-ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
-ChromeUtils.defineModuleGetter(
-  this,
-  "LoginHelper",
-  "resource://gre/modules/LoginHelper.jsm"
+const { Point, Rect } = ChromeUtils.importESModule(
+  "resource://gre/modules/Geometry.sys.mjs"
+);
+const { FileUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/FileUtils.sys.mjs"
 );
 
-let actorManagerChildAttached = false;
+// ActorManagerChild is Firefox chrome-actor bootstrap. EmbedLite loads this
+// helper in its frame-script global and registers its own message handlers
+// below; attaching the Firefox singleton actors on ESR115 crashes before first
+// paint.
 
-const CHILD_SINGLETON_ACTORS = "ChildSingletonActors";
-
-function canInitializeActorManagerChild() {
-  if (actorManagerChildAttached)
-    return false;
-
-  const { sharedData } = Services.cpmm;
-  return sharedData.get(CHILD_SINGLETON_ACTORS);
+// ESR115's LSNG localStorage backend depends on browser-process plumbing that
+// EmbedLite does not provide yet. Set this before content scripts run so
+// synchronous localStorage reads use the legacy backend instead of throwing.
+if (!Services.prefs.getBoolPref("dom.storage.enable_unsupported_legacy_implementation", false)) {
+  Services.prefs.setBoolPref("dom.storage.enable_unsupported_legacy_implementation", true);
 }
-
-function initializeActorManagerChild() {
-  try {
-    if (canInitializeActorManagerChild()) {
-      const { ActorManagerChild } = ChromeUtils.import("resource://gre/modules/ActorManagerChild.jsm");
-      ActorManagerChild.attach(this);
-      actorManagerChildAttached = true;
-    }
-  } catch (e) {}
-}
-
-initializeActorManagerChild();
 
 Cu.importGlobalProperties(["InspectorUtils"]);
-
-XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerChild",
-                                  "resource://gre/modules/LoginManagerChild.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerParent",
-                                  "resource://gre/modules/LoginManagerParent.jsm");
 
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
@@ -85,14 +67,8 @@ EmbedHelper.prototype = {
     addEventListener("touchmove", this, false);
     addEventListener("touchend", this, false);
     addEventListener("DOMContentLoaded", this, true);
-    addEventListener("DOMFormHasPassword", this, true);
-    addEventListener("DOMAutoComplete", this, true);
-    addEventListener("blur", this, true);
     addEventListener("mozfullscreenchange", this, false);
     addMessageListener("Viewport:Change", this);
-    addMessageListener("Gesture:DoubleTap", this);
-    addMessageListener("Gesture:SingleTap", this);
-    addMessageListener("Gesture:LongTap", this);
     addMessageListener("embedui:find", this);
     addMessageListener("embedui:exitFullscreen", this);
     addMessageListener("embedui:zoomToRect", this);
@@ -103,7 +79,6 @@ EmbedHelper.prototype = {
     addMessageListener("Gesture:ContextMenuSynth", this);
     addMessageListener("embed:ContextMenuCreate", this);
     Services.obs.addObserver(this, "embedlite-before-first-paint", true);
-    Services.cpmm.sharedData.addEventListener("change", this);
 
     Logger.debug("Available locales: " + availableLocales.join(", "));
     Services.locale.availableLocales = availableLocales;
@@ -145,61 +120,6 @@ EmbedHelper.prototype = {
         this._sendContextMenuEvent(element, x, y);
         break;
       }
-      case "Gesture:SingleTap": {
-        if (SelectionHandler.isActive) {
-            SelectionHandler._onSelectionCopy({xPos: aMessage.json.x, yPos: aMessage.json.y});
-        }
-
-        try {
-          let [x, y] = [aMessage.json.x, aMessage.json.y];
-          this._sendMouseEvent("mousemove", content, x, y);
-          this._sendMouseEvent("mousedown", content, x, y);
-          this._sendMouseEvent("mouseup",   content, x, y);
-        } catch(e) {
-          Cu.reportError(e);
-        }
-
-        if (this._touchEventDefaultPrevented) {
-          this._touchEventDefaultPrevented = false;
-        } else {
-          let uri = this._getLinkURI(this._touchElement);
-          if (uri && (uri instanceof Ci.nsIURI)) {
-            try {
-              let winId = Services.embedlite.getIDByWindow(content);
-              Services.embedlite.sendAsyncMessage(winId, "embed:linkclicked",
-                                                  JSON.stringify({
-                                                                   "uri": uri.asciiSpec
-                                                                 }));
-            } catch (e) {
-              Logger.warn("embedhelper: sending async message failed", e)
-            }
-          }
-          this._touchElement = null;
-        }
-        break;
-      }
-      case "Gesture:DoubleTap": {
-        try {
-          let [x, y] = [aMessage.json.x, aMessage.json.y];
-          this._sendMouseEvent("mousemove", content, x, y);
-          this._sendMouseEvent("mousedown", content, x, y, 2);
-          this._sendMouseEvent("mouseup",   content, x, y);
-        } catch(e) {
-          Cu.reportError(e);
-        }
-        this._cancelTapHighlight();
-        break;
-      }
-      case "Gesture:LongTap": {
-        this._cancelTapHighlight();
-        let element = this._touchElement;
-        if (element) {
-          let [x, y] = [aMessage.json.x, aMessage.json.y];
-          ContextMenuHandler._processPopupNode(element, x, y, MouseEvent.MOZ_SOURCE_UNKNOWN);
-        }
-        this._touchElement = null;
-        break;
-      }
       case "embedui:find": {
         let searchText = aMessage.json.text;
         let searchAgain = aMessage.json.again;
@@ -218,7 +138,9 @@ EmbedHelper.prototype = {
 
         let result = null;
         if (!this._finder) {
-          const {Finder} = ChromeUtils.import("resource://gre/modules/Finder.jsm", {});
+          const { Finder } = ChromeUtils.importESModule(
+            "resource://gre/modules/Finder.sys.mjs"
+          );
           this._finder = new Finder(docShell);
           result = this._finder.fastFind(searchText, false, true);
         } else if (!searchAgain) {
@@ -263,7 +185,13 @@ EmbedHelper.prototype = {
 
         let docShell = content.docShell;
         let sessionHistory = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
-        let legacyHistory = sessionHistory.legacySHistory;
+        let legacyHistory;
+        try {
+          legacyHistory = sessionHistory.legacySHistory;
+        } catch (e) {
+          Logger.warn("Warning: legacy session history is not available", e);
+          break;
+        }
         let ioService = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 
         try {
@@ -326,7 +254,7 @@ EmbedHelper.prototype = {
             Logger.debug("Warning: couldn't construct initial URI. Assuming a http:// URI is provided");
             initialURI = ioService.newURI("http://" + links[index], null, null);
         }
-        docShell.setCurrentURI(initialURI);
+        docShell.setCurrentURIForSessionStore(initialURI);
         break;
       }
       case "embedui:runjavascript": {
@@ -422,25 +350,6 @@ EmbedHelper.prototype = {
 
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
-      case "DOMFormHasPassword": {
-        let form = aEvent.target;
-        let doc = form.ownerDocument;
-        let win = doc.defaultView;
-        LoginManagerChild.forWindow(win).onDOMFormHasPassword(aEvent);
-        break;
-      }
-      case "DOMAutoComplete":
-      case "blur": {
-        let form = aEvent.target;
-        if (form.ownerDocument &&
-                ChromeUtils.getClassName(form) === "HTMLInputElement" &&
-                (form.hasBeenTypePassword ||
-                  LoginHelper.isUsernameFieldType(form))) {
-          let win = form.ownerDocument.defaultView;
-          LoginManagerChild.forWindow(win).onFieldAutoComplete(form, null);
-        }
-        break;
-      }
       case 'touchstart':
         this._handleTouchStart(aEvent);
         break;
@@ -452,13 +361,6 @@ EmbedHelper.prototype = {
         break;
       case "mozfullscreenchange":
         this._handleFullScreenChanged(aEvent);
-        break;
-      case "change":
-        // ActorManagerParent.jsm sets data and SharedMap triggers broadcasting
-        // upon KeyChanged. See EmbedLiteGlobalHelper where we flush().
-        if (aEvent.changedKeys.includes("ChildSingletonActors")) {
-          initializeActorManagerChild();
-        }
         break;
     }
   },
@@ -660,6 +562,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/ContextMenuHandl
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionPrototype.js", this);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectionHandler.js", this);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/SelectAsyncHelper.js", this);
+Services.scriptloader.loadSubScript("chrome://embedlite/content/ClipboardReadPasteHelper.js", this);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/FormAssistant.js", this);
 Services.scriptloader.loadSubScript("chrome://embedlite/content/InputMethodHandler.js", this);
 
