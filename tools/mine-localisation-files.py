@@ -175,12 +175,6 @@ def mine_locale(locale, date):
         # ./mobile/overrides/netError.dtd
         convert_file('netError.dtd', './mobile/overrides', folder)
 
-        # ./mobile/android/chrome/aboutCertError.dtd
-        convert_file('aboutCertError.dtd', './mobile/android/chrome', folder)
-
-        # ./browser/browser/aboutCertError.ftl
-        convert_file('aboutCertError.ftl', './browser/browser', folder)
-
     # Clean up
     if cloned:
         print('Removing temporary repository: {}'.format(repo_local))

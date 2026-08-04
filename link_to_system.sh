@@ -80,7 +80,6 @@ rm -rf $TARGET_DIR/chrome/chrome;
 mkdir -p $TARGET_DIR/chrome/chrome/content;
 mkdir -p $TARGET_DIR/chrome/chrome/skin;
 mkdir -p $TARGET_DIR/chrome/chrome/skin/images;
-ln -s $(pwd)/overrides/aboutCertError.xhtml $TARGET_DIR/chrome/chrome/content/
 ln -s $(pwd)/overrides/netError.xhtml $TARGET_DIR/chrome/chrome/content/
 ln -s $(pwd)/overrides/appstrings.properties $TARGET_DIR/chrome/chrome/content/
 ln -s $(pwd)/overrides/netError.css $TARGET_DIR/chrome/chrome/skin/
@@ -108,5 +107,4 @@ mkdir -p $TARGET_DIR/chrome/en-US/locale/branding;
 mkdir -p $TARGET_DIR/chrome/en-US/locale/en-US/browser;
 ln -s $(pwd)/overrides/brand.dtd $TARGET_DIR/chrome/en-US/locale/branding/
 ln -s $(pwd)/overrides/brand.properties $TARGET_DIR/chrome/en-US/locale/branding/
-ln -s $(pwd)/overrides/aboutCertError.dtd $TARGET_DIR/chrome/en-US/locale/en-US/browser/
 ln -s $(pwd)/overrides/netError.dtd $TARGET_DIR/chrome/en-US/locale/en-US/browser/
