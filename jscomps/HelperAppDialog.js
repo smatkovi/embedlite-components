@@ -15,7 +15,6 @@ var EXPORTED_SYMBOLS = ["HelperAppLauncherDialog"];
 
 const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const { DownloadPaths } = ChromeUtils.importESModule("resource://gre/modules/DownloadPaths.sys.mjs");
 const { Downloads } = ChromeUtils.importESModule("resource://gre/modules/Downloads.sys.mjs");

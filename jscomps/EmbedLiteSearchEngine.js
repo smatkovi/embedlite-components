@@ -10,7 +10,6 @@ var EXPORTED_SYMBOLS = ["EmbedLiteSearchEngine"];
 
 const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 

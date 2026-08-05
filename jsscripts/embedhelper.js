@@ -6,7 +6,6 @@
 
 let { classes: Cc, interfaces: Ci, results: Cr, utils: Cu }  = Components;
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { Point, Rect } = ChromeUtils.importESModule(
   "resource://gre/modules/Geometry.sys.mjs"
 );

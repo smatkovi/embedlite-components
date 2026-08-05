@@ -12,7 +12,6 @@
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");

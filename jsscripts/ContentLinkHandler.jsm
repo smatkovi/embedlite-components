@@ -6,7 +6,6 @@
 
 var EXPORTED_SYMBOLS = [ "ContentLinkHandler" ];
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineModuleGetter(this, "Feeds",
   "chrome://embedlite/content/Feeds.jsm");

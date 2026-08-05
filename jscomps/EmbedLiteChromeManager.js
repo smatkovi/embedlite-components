@@ -15,7 +15,6 @@ var EXPORTED_SYMBOLS = ["EmbedLiteChromeManager"];
 
 const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { NetErrorHelper } = ChromeUtils.import("chrome://embedlite/content/NetErrorHelper.jsm")
 
 XPCOMUtils.defineLazyModuleGetters(this, {

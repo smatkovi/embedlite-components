@@ -18,7 +18,6 @@ var EXPORTED_SYMBOLS = ["EmbedLiteWebrtcUI"];
 const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "MediaManagerService",
                                    "@mozilla.org/mediaManagerService;1",
                                    "nsIMediaManagerService");

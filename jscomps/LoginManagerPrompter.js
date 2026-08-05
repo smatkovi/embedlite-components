@@ -32,7 +32,6 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
 const { PromptUtils } = ChromeUtils.importESModule("resource://gre/modules/PromptUtils.sys.mjs");
 var EXPORTED_SYMBOLS = ["LoginManagerPromptFactory", "LoginManagerPrompter"];
@@ -148,12 +147,13 @@ LoginManagerPromptFactory.prototype = {
   // Promise used to defer prompts if the password manager isn't ready when
   // they're called.
   _uiBusyPromise: null,
+  _uiBusyResolve: null,
 
   observe(subject, topic, data) {
     this.log("Observed: " + topic);
     if (topic == "passwordmgr-crypto-login") {
       // Show the deferred prompters.
-      this._uiBusyPromise?.resolve();
+      this._uiBusyResolve?.();
     }
   },
 
@@ -225,9 +225,11 @@ LoginManagerPromptFactory.prototype = {
       return;
     }
 
-    this.log("Waiting for master password UI");
+    this.log("Waiting for primary password UI");
 
-    this._uiBusyPromise = new Promise();
+    this._uiBusyPromise = new Promise(resolve => {
+      this._uiBusyResolve = resolve;
+    });
     await this._uiBusyPromise;
   },
 
@@ -704,7 +706,7 @@ LoginManagerPrompter.prototype = {
       Services.logins.recordPasswordUse(
         selectedLogin,
         this._inPrivateBrowsing,
-        "prompt_login",
+        "PromptLogin",
         autofilled
       );
     }
@@ -1022,7 +1024,7 @@ LoginManagerPrompter.prototype = {
         Services.logins.recordPasswordUse(
           selectedLogin,
           this._inPrivateBrowsing,
-          "auth_login",
+          "AuthLogin",
           autofilled
         );
       }
@@ -1240,10 +1242,8 @@ LoginManagerPrompter.prototype = {
    *       to be changed, aNewLogin.username and aNewLogin.usernameField
    *       will be set (using the user's selection) before modifyLogin()
    *       is called.
-   *
-   * Note: XPCOM stupidity: |count| is just |logins.length|.
    */
-  promptToChangePasswordWithUsernames(aBrowser, logins, count, aNewLogin) {
+  promptToChangePasswordWithUsernames(aBrowser, logins, aNewLogin) {
     this.log("promptToChangePasswordWithUsernames");
 
     // We reuse the existing message, even if it expects a username, until we

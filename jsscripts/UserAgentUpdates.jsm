@@ -12,7 +12,6 @@ var EXPORTED_SYMBOLS = ["UserAgentUpdates"];
 
 const { AppConstants } = ChromeUtils.importESModule("resource://gre/modules/AppConstants.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Cu.importGlobalProperties(["XMLHttpRequest"]);
 

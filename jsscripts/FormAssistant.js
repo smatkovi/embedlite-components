@@ -13,10 +13,6 @@ function debug(msg) {
   Logger.debug("FormAssistant.js -", msg);
 }
 
-XPCOMUtils.defineLazyModuleGetters(this, {
-  Services: "resource://gre/modules/Services.jsm",
-});
-
 /**
   * FormAssistant
   *

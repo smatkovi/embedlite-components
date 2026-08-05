@@ -9,7 +9,6 @@ this.EXPORTED_SYMBOLS = ["OrientationChangeHandler"];
 const Ci = Components.interfaces;
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",

@@ -6,7 +6,6 @@
 
 var EXPORTED_SYMBOLS = [ "Feeds" ];
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineESModuleGetters(this, {
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",

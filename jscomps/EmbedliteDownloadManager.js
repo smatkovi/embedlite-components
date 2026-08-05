@@ -22,7 +22,6 @@ const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMU
 ChromeUtils.defineESModuleGetters(this, {
   Downloads: "resource://gre/modules/Downloads.sys.mjs",
 });
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 

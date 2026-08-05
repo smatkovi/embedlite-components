@@ -9,7 +9,6 @@ const Cr = Components.results;
 var EXPORTED_SYMBOLS = ["EmbedPrefService"];
 
 const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
