@@ -19,7 +19,7 @@ let modules = {
   },
 
   certerror: {
-    uri: "chrome://global/content/aboutNetError.xhtml",
+    uri: "chrome://global/content/aboutNetError.html",
     privileged: false,
     hide: true
   },

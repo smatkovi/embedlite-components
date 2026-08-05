@@ -11,9 +11,6 @@ const PREF_BD_USEDOWNLOADDIR = "browser.download.useDownloadDir";
 const PREF_BD_DOWNLOADDIR = "browser.download.dir";
 const URI_GENERIC_ICON_DOWNLOAD = "drawable://alert_download";
 
-var EXPORTED_SYMBOLS = ["HelperAppLauncherDialog"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 const { DownloadPaths } = ChromeUtils.importESModule("resource://gre/modules/DownloadPaths.sys.mjs");
@@ -45,8 +42,8 @@ function isUsableDirectory(aDirectory)
 // HelperApp Launcher Dialog
 // -----------------------------------------------------------------------
 
-function HelperAppLauncherDialog() {
-  Logger.debug("JSComp: HelperAppDialog.js loaded");
+export function HelperAppLauncherDialog() {
+  Logger.debug("JSComp: HelperAppDialog.sys.mjs loaded");
   // Initialize data properties.
   this.mLauncher = null;
 }
@@ -169,7 +166,3 @@ HelperAppLauncherDialog.prototype = {
     })().catch(Cu.reportError);
   },
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([HelperAppLauncherDialog]);
-}

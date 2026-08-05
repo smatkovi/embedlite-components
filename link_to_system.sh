@@ -21,7 +21,7 @@ FILES_LIST="
 jscomps/EmbedLiteJSComponents.manifest
 jscomps/AboutRedirector.js
 jscomps/LoginManagerPrompter.js
-jscomps/HelperAppDialog.js
+jscomps/HelperAppDialog.sys.mjs
 jscomps/FilePicker.js
 jscomps/ContentPermissionPrompt.js
 jscomps/ContentPermissionManager.js
