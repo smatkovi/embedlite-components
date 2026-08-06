@@ -7,18 +7,20 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
-var EXPORTED_SYMBOLS = ["ContentPermissionManager"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
                                     "nsIEmbedAppService");
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
-function ContentPermissionManager() {
+export function ContentPermissionManager() {
   Logger.debug("JSComp: ContentPermissionManager.js loaded");
 }
 
@@ -92,7 +94,3 @@ ContentPermissionManager.prototype = {
       }
   }
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([ContentPermissionManager]);
-}

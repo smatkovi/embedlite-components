@@ -34,15 +34,18 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
 const { PromptUtils } = ChromeUtils.importESModule("resource://gre/modules/PromptUtils.sys.mjs");
-var EXPORTED_SYMBOLS = ["LoginManagerPromptFactory", "LoginManagerPrompter"];
+const lazy = {};
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
-
-ChromeUtils.defineESModuleGetters(this, {
+ChromeUtils.defineESModuleGetters(lazy, {
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
 });
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 const LoginInfo = Components.Constructor(
   "@mozilla.org/login-manager/loginInfo;1",
@@ -122,7 +125,7 @@ XPCOMUtils.defineLazyPreferenceGetter(
  *
  * Invoked by [toolkit/components/prompts/src/Prompter.jsm]
  */
-function LoginManagerPromptFactory() {
+export function LoginManagerPromptFactory() {
   Logger.debug("JSComp: LoginManagerPromptFactory loaded");
 
   Services.obs.addObserver(this, "passwordmgr-crypto-login", true);
@@ -214,7 +217,7 @@ LoginManagerPromptFactory.prototype = {
     let hasLogins = Services.logins.countLogins(origin, null, httpRealm) > 0;
     if (
       !hasLogins &&
-      LoginHelper.schemeUpgrades &&
+      lazy.LoginHelper.schemeUpgrades &&
       origin.startsWith("https://")
     ) {
       let httpOrigin = origin.replace(/^https:\/\//, "http://");
@@ -288,10 +291,10 @@ LoginManagerPromptFactory.prototype = {
 }; // end of LoginManagerPromptFactory implementation
 
 XPCOMUtils.defineLazyGetter(
-  this.LoginManagerPromptFactory.prototype,
+  LoginManagerPromptFactory.prototype,
   "log",
   () => {
-    let logger = LoginHelper.createLogger("Login PromptFactory");
+    let logger = lazy.LoginHelper.createLogger("Login PromptFactory");
     return logger.log.bind(logger);
   }
 );
@@ -310,7 +313,7 @@ XPCOMUtils.defineLazyGetter(
  * nsILoginManagerPrompter: Used by Login Manager for saving/changing logins
  * found in HTML forms.
  */
-function LoginManagerPrompter() {
+export function LoginManagerPrompter() {
   Logger.debug("JSComp: LoginManagerPrompter.js loaded");
 }
 
@@ -548,7 +551,7 @@ LoginManagerPrompter.prototype = {
     if (!this._inPrivateBrowsing) {
       return true;
     }
-    return LoginHelper.privateBrowsingCaptureEnabled;
+    return lazy.LoginHelper.privateBrowsingCaptureEnabled;
   },
 
   /* ---------- nsIAuthPrompt prompts ---------- */
@@ -853,14 +856,14 @@ LoginManagerPrompter.prototype = {
       var [origin, httpRealm] = this._getAuthTarget(aChannel, aAuthInfo);
 
       // Looks for existing logins to prefill the prompt with.
-      foundLogins = LoginHelper.searchLoginsWithObject({
+      foundLogins = lazy.LoginHelper.searchLoginsWithObject({
         origin,
         httpRealm,
-        schemeUpgrades: LoginHelper.schemeUpgrades,
+        schemeUpgrades: lazy.LoginHelper.schemeUpgrades,
       });
       this.log("found", foundLogins.length, "matching logins.");
       let resolveBy = ["scheme", "timePasswordChanged"];
-      foundLogins = LoginHelper.dedupeLogins(
+      foundLogins = lazy.LoginHelper.dedupeLogins(
         foundLogins,
         ["username"],
         resolveBy,
@@ -1718,17 +1721,12 @@ LoginManagerPrompter.prototype = {
 
 }; // end of LoginManagerPrompter implementation
 
-XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "log", () => {
+XPCOMUtils.defineLazyGetter(LoginManagerPrompter.prototype, "log", () => {
   let logger = Logger
   return logger.debug.bind(logger);
 });
 
-XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "warn", () => {
+XPCOMUtils.defineLazyGetter(LoginManagerPrompter.prototype, "warn", () => {
   let logger = Logger
   return logger.warn.bind(logger);
 });
-
-var component = [LoginManagerPromptFactory, LoginManagerPrompter];
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory(component);
-}

@@ -14,16 +14,19 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedliteDownloadManager"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
+const { Downloads } = ChromeUtils.importESModule(
+  "resource://gre/modules/Downloads.sys.mjs"
+);
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
-ChromeUtils.defineESModuleGetters(this, {
-  Downloads: "resource://gre/modules/Downloads.sys.mjs",
-});
+const lazy = {};
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 const {
   DownloadCopySaver,
@@ -32,7 +35,7 @@ const {
 } = ChromeUtils.importESModule("resource://gre/modules/DownloadCore.sys.mjs");
 
 XPCOMUtils.defineLazyServiceGetter(
-  this,
+  lazy,
   "gPrintSettingsService",
   "@mozilla.org/gfx/printsettings-service;1",
   Ci.nsIPrintSettingsService
@@ -184,7 +187,7 @@ let DownloadView = {
 ////////////////////////////////////////////////////////////////////////////////
 //// EmbedliteDownloadManager
 
-function EmbedliteDownloadManager()
+export function EmbedliteDownloadManager()
 {
   Logger.debug("JSComp: EmbedliteDownloadManager.js loaded");
 }
@@ -287,10 +290,6 @@ EmbedliteDownloadManager.prototype = {
   }
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedliteDownloadManager]);
-}
-
 /**
  * This DownloadSaver type creates a PDF file from the current document in a
  * given window, specified using the windowRef property of the DownloadSource
@@ -345,7 +344,7 @@ DownloadPDFSaver.prototype = {
     // An empty target file must exist for the PDF printer to work correctly.
     await IOUtils.writeUTF8(targetPath, "");
 
-    let printSettings = gPrintSettingsService.createNewPrintSettings();
+    let printSettings = lazy.gPrintSettingsService.createNewPrintSettings();
 
     printSettings.outputFormat = Ci.nsIPrintSettings.kOutputFormatPDF;
     printSettings.outputDestination =
@@ -388,10 +387,18 @@ DownloadPDFSaver.prototype = {
    * Implements "DownloadSaver.cancel".
    */
   cancel: function DCS_cancel() {
-    if (this._browsingContext) {
-      this._browsingContext.cancel();
-      this._browsingContext = null;
-    }
+    // BrowsingContext.print() has no cancellation API. DownloadCore will wait
+    // for execute() to finish, then call removeData() for a canceled download.
+  },
+
+  /**
+   * Implements "DownloadSaver.removeData".
+   */
+  removeData(canRemoveFinalTarget) {
+    return DownloadCopySaver.prototype.removeData.call(
+      this,
+      canRemoveFinalTarget
+    );
   },
 
   /**

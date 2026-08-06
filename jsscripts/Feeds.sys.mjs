@@ -4,14 +4,11 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "Feeds" ];
+const { BrowserUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/BrowserUtils.sys.mjs"
+);
 
-
-ChromeUtils.defineESModuleGetters(this, {
-  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
-});
-
-var Feeds = {
+export const Feeds = {
   // Listeners are added in nsBrowserGlue.js
   receiveMessage(aMessage) {
     let data = aMessage.data;

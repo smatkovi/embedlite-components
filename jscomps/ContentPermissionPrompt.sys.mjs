@@ -6,25 +6,26 @@ const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cc = Components.classes;
 
-var EXPORTED_SYMBOLS = ["ContentPermissionPrompt"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-
-ChromeUtils.defineESModuleGetters(this, {
-  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
-});
+const { PrivateBrowsingUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/PrivateBrowsingUtils.sys.mjs"
+);
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
                                     "nsIEmbedAppService");
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 const kEntities = { "geolocation": "geolocation",
                     "desktop-notification": "desktopNotification" };
 
-function ContentPermissionPrompt() {
+export function ContentPermissionPrompt() {
   Logger.debug("JSComp: ContentPermissionPrompt.js loaded");
 }
 
@@ -158,8 +159,3 @@ ContentPermissionPrompt.prototype = {
     }
   }
 };
-
-//module initialization
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([ContentPermissionPrompt]);
-}

@@ -4,14 +4,9 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "ContentLinkHandler" ];
-
-
-ChromeUtils.defineModuleGetter(this, "Feeds",
-  "chrome://embedlite/content/Feeds.jsm");
-ChromeUtils.defineESModuleGetters(this, {
-  BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
-});
+const { Feeds } = ChromeUtils.importESModule(
+  "chrome://embedlite/content/Feeds.sys.mjs"
+);
 
 const SIZES_TELEMETRY_ENUM = {
   NO_SIZES: 0,
@@ -274,7 +269,7 @@ function handleFaviconLink(aLink, aIsRichIcon, aChromeGlobal, aFaviconLoads) {
   return true;
 }
 
-var ContentLinkHandler = {
+export const ContentLinkHandler = {
   init(chromeGlobal) {
     const faviconLoads = new Map();
     chromeGlobal.addEventListener("DOMLinkAdded", event => {

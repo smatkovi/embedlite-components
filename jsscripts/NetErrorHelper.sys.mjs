@@ -7,16 +7,17 @@
 
 "use strict";
 
-// For the Android variant see gecko-dev/mobile/android/modules/NetErrorHelper.jsm
+// For the Android variant see gecko-dev/mobile/android/modules/NetErrorHelper.sys.mjs
 
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
-
-var EXPORTED_SYMBOLS = ["NetErrorHelper"];
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 const KEY_CODE_ENTER = 13;
 
@@ -35,7 +36,7 @@ const KEY_CODE_ENTER = 13;
 
 var handlers = {};
 
-function NetErrorHelper(browser) {
+export function NetErrorHelper(browser) {
   browser.addEventListener("click", this.handleClick, true);
 
   let listener = () => {
@@ -184,4 +185,3 @@ handlers.wifi = {
     }
   }
 };
-

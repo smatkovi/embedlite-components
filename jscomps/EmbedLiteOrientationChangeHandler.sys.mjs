@@ -6,19 +6,23 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteOrientationChangeHandler"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { OrientationChangeHandler } = ChromeUtils.import("chrome://embedlite/content/OrientationChangeHandler.jsm")
+const { OrientationChangeHandler } = ChromeUtils.importESModule(
+  "chrome://embedlite/content/OrientationChangeHandler.sys.mjs"
+);
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                    "@mozilla.org/embedlite-app-service;1",
                                    "nsIEmbedAppService");
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
-function EmbedLiteOrientationChangeHandler()
+export function EmbedLiteOrientationChangeHandler()
 {
   Logger.debug("JSComp: EmbedLiteOrientationChangeHandler.js loaded");
 }
@@ -66,7 +70,3 @@ EmbedLiteOrientationChangeHandler.prototype = {
 
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteOrientationChangeHandler]);
-}

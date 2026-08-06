@@ -13,16 +13,20 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteWebrtcUI"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
-XPCOMUtils.defineLazyServiceGetter(this, "MediaManagerService",
+const lazy = {};
+
+XPCOMUtils.defineLazyServiceGetter(lazy, "MediaManagerService",
                                    "@mozilla.org/mediaManagerService;1",
                                    "nsIMediaManagerService");
 
-Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
+const loggerScope = {};
+Services.scriptloader.loadSubScript(
+  "chrome://embedlite/content/Logger.js",
+  loggerScope
+);
+const { Logger } = loggerScope;
 
 function debug(...args)
 {
@@ -230,7 +234,7 @@ WebrtcPermissionRequest.prototype = {
   }
 }
 
-function EmbedLiteWebrtcUI()
+export function EmbedLiteWebrtcUI()
 {
   this._pendingRequests = []
   debug("loaded");
@@ -358,7 +362,7 @@ EmbedLiteWebrtcUI.prototype = {
         break;
 
       case "recording-device-events":
-        let windows = MediaManagerService.activeMediaCaptureWindows;
+        let windows = lazy.MediaManagerService.activeMediaCaptureWindows;
         let webrtcMediaInfo = { "video": false, "audio": false};
 
         for (let i = 0; i < windows.length; i++) {
@@ -370,7 +374,7 @@ EmbedLiteWebrtcUI.prototype = {
           let browserShare = {};
           let mediaDevices = {};
 
-          MediaManagerService.mediaCaptureWindowState(
+          lazy.MediaManagerService.mediaCaptureWindowState(
             win,
             hasCamera,
             hasMicrophone,
@@ -379,9 +383,9 @@ EmbedLiteWebrtcUI.prototype = {
             browserShare,
             mediaDevices,
             true /* aIncludeDescendants */);
-          if (hasCamera.value != MediaManagerService.STATE_NOCAPTURE)
+          if (hasCamera.value != lazy.MediaManagerService.STATE_NOCAPTURE)
             webrtcMediaInfo.video = true;
-          if (hasMicrophone.value != MediaManagerService.STATE_NOCAPTURE)
+          if (hasMicrophone.value != lazy.MediaManagerService.STATE_NOCAPTURE)
             webrtcMediaInfo.audio = true;
         }
 
@@ -391,7 +395,3 @@ EmbedLiteWebrtcUI.prototype = {
     }
   }
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteWebrtcUI]);
-}

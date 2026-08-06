@@ -1,28 +1,27 @@
 jscomps_manifestdir=$(libdir)/mozembedlite/components
 jscomps_manifest_DATA = \
 	EmbedLiteJSComponents.manifest \
-	AboutRedirector.js \
-	LoginManagerPrompter.js \
+	AboutRedirector.sys.mjs \
+	LoginManagerPrompter.sys.mjs \
 	HelperAppDialog.sys.mjs \
-	EmbedPrefService.js \
+	EmbedPrefService.sys.mjs \
 	FilePicker.js \
-	ContentPermissionPrompt.js \
-	ContentPermissionManager.js \
-	EmbedLiteGlobalHelper.js \
-	EmbedLiteConsoleListener.js \
-	EmbedLiteChromeManager.js \
-	EmbedLiteOrientationChangeHandler.js \
-	EmbedLiteSyncService.js \
-	EmbedLiteFaviconService.js \
-	EmbedLiteSearchEngine.js \
-	EmbedLiteErrorPageHandler.js \
-	UserAgentOverrideHelper.js \
-	XPIDialogService.js \
-	PrivateDataManager.js \
-	EmbedliteDownloadManager.js \
-	LoginsHelper.js \
-	EmbedLiteWebrtcUI.js \
-	IntentProtocolHandler.js \
+	ContentPermissionPrompt.sys.mjs \
+	ContentPermissionManager.sys.mjs \
+	EmbedLiteGlobalHelper.sys.mjs \
+	EmbedLiteConsoleListener.sys.mjs \
+	EmbedLiteChromeManager.sys.mjs \
+	EmbedLiteOrientationChangeHandler.sys.mjs \
+	EmbedLiteFaviconService.sys.mjs \
+	EmbedLiteSearchEngine.sys.mjs \
+	EmbedLiteErrorPageHandler.sys.mjs \
+	UserAgentOverrideHelper.sys.mjs \
+	XPIDialogService.sys.mjs \
+	PrivateDataManager.sys.mjs \
+	EmbedliteDownloadManager.sys.mjs \
+	LoginsHelper.sys.mjs \
+	EmbedLiteWebrtcUI.sys.mjs \
+	IntentProtocolHandler.sys.mjs \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)
