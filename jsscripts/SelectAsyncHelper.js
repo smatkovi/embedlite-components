@@ -101,7 +101,7 @@ SelectHelper.prototype = {
   _nodeMap: {},
 
   _init: function() {
-    addEventListener("click", this, false);
+    addEventListener("click", this, true);
   },
 
   handleEvent: function(aEvent) {
