@@ -13,7 +13,7 @@ function debug(msg) {
 }
 
 function isMenu(aElement) {
-  return (aElement instanceof content.HTMLSelectElement ||
+  return (HTMLSelectElement.isInstance(aElement) ||
           aElement instanceof Ci.nsIDOMXULMenuListElement);
 }
 
@@ -40,13 +40,13 @@ function getOptionList(aElement, aProps, aIndexFunction) {
       "group": aProps.group || ""
     };
 
-    if (child instanceof content.HTMLOptionElement ||
+    if (HTMLOptionElement.isInstance(child) ||
         child instanceof Ci.nsIDOMXULSelectControlItemElement) {
       if (aIndexFunction) {
         item["index"] = aIndexFunction(child);
       }
       list.push(item);
-    } else if (child instanceof content.HTMLOptGroupElement) {
+    } else if (HTMLOptGroupElement.isInstance(child)) {
       let props = {
         "group": item["label"],
         "disabled": item["disabled"]
@@ -101,7 +101,7 @@ SelectHelper.prototype = {
   _nodeMap: {},
 
   _init: function() {
-    addEventListener("click", this, false);
+    addEventListener("click", this, true);
   },
 
   handleEvent: function(aEvent) {
@@ -166,7 +166,7 @@ SelectHelper.prototype = {
           break;
         }
       }
-    } else if (aElement instanceof content.HTMLSelectElement) {
+    } else if (HTMLSelectElement.isInstance(aElement)) {
       let that = this;
       aOptions.forEach(function (option) {
           that._nodeMap[option.index].selected = option.selected;
