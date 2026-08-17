@@ -5,8 +5,8 @@ const lazy = {};
 
 "use strict";
 
-ChromeUtils.defineESModuleGetters(lazy, { Feeds: "chrome://embedlite/content/lazy.Feeds.sys.mjs" });
 ChromeUtils.defineESModuleGetters(lazy, {
+  Feeds: "chrome://embedlite/content/Feeds.sys.mjs",
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
 });
 
