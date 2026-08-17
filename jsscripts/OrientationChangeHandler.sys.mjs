@@ -1,3 +1,4 @@
+const lazy = {};
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -9,12 +10,12 @@ this.EXPORTED_SYMBOLS = ["OrientationChangeHandler"];
 const Ci = Components.interfaces;
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
                                     "nsIEmbedAppService");
-XPCOMUtils.defineLazyModuleGetter(this, "Logger",
+ChromeUtils.defineESModuleGetters(lazy, "Logger",
                                   "chrome://embedlite/content/Logger.js");
 
 this.OrientationChangeHandler = function OrientationChangeHandler(window) {

@@ -2,13 +2,13 @@ jsscripts_manifestdir=$(libdir)/mozembedlite-next/chrome/embedlite/content
 jsscripts_manifest_DATA = \
 	embedhelper.js \
 	Logger.js \
-	Feeds.jsm \
+	Feeds.sys.mjs \
 	FormAssistant.js \
 	InputMethodHandler.js \
-	ContentLinkHandler.jsm \
-	OrientationChangeHandler.jsm \
-	UserAgentUpdates.jsm \
-	UserAgentOverrides.jsm \
+	ContentLinkHandler.sys.mjs \
+	OrientationChangeHandler.sys.mjs \
+	UserAgentUpdates.sys.mjs \
+	UserAgentOverrides.sys.mjs \
 	SelectAsyncHelper.js \
 	ClipboardReadPasteHelper.js \
 	SelectionHandler.js \
@@ -16,7 +16,7 @@ jsscripts_manifest_DATA = \
 	Util.js \
 	ClickEventBlocker.js \
 	ContextMenuHandler.js \
-	NetErrorHelper.jsm \
+	NetErrorHelper.sys.mjs \
 	$(NULL)
 
 sync_engine_manifestdir=$(libdir)/mozembedlite-next/chrome/embedlite/content/sync

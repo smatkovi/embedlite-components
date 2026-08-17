@@ -16,7 +16,7 @@ const PREF_OVERRIDE             = "general.useragent.override";
 
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { UserAgentOverrides } = ChromeUtils.import("chrome://embedlite/content/UserAgentOverrides.jsm");
+const { UserAgentOverrides } = ChromeUtils.importESModule("chrome://embedlite/content/UserAgentOverrides.sys.mjs");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 

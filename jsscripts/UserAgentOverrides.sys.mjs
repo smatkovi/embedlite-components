@@ -11,8 +11,8 @@
 var EXPORTED_SYMBOLS = [ "UserAgentOverrides" ];
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const { UserAgentUpdates } = ChromeUtils.import("chrome://embedlite/content/UserAgentUpdates.jsm");
+const { Services } = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
+const { UserAgentUpdates } = ChromeUtils.importESModule("chrome://embedlite/content/UserAgentUpdates.sys.mjs");
 
 const PREF_OVERRIDES_ENABLED = "general.useragent.site_specific_overrides";
 const MAX_OVERRIDE_FOR_HOST_CACHE_SIZE = 250;

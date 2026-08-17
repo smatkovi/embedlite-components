@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { OrientationChangeHandler } = ChromeUtils.import("chrome://embedlite/content/OrientationChangeHandler.jsm")
+const { OrientationChangeHandler } = ChromeUtils.importESModule("chrome://embedlite/content/OrientationChangeHandler.sys.mjs")
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                    "@mozilla.org/embedlite-app-service;1",

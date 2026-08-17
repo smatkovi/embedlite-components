@@ -5,7 +5,7 @@
  * Copyright (c) 2020 Open Mobile Platform LLC.
  */
 
-var LoggerServices = ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
+var LoggerServices = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs").Services;
 
 if (typeof EXPORTED_SYMBOLS == "undefined") {
   var EXPORTED_SYMBOLS = [ "Logger" ];
