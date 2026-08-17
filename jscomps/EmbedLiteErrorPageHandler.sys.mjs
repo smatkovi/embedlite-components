@@ -6,11 +6,8 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteErrorPageHandler"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
 
 ChromeUtils.defineESModuleGetters(this, {
@@ -24,7 +21,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 // Common helper service
 
-function EmbedLiteErrorPageHandler()
+export function EmbedLiteErrorPageHandler()
 {
   Logger.debug("JSComp: EmbedLiteErrorPageHandler.js loaded");
 }
@@ -177,6 +174,3 @@ var ErrorPageEventHandler = {
 };
 
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteErrorPageHandler]);
-}

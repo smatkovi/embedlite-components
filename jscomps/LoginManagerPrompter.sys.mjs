@@ -32,12 +32,8 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
 const { PromptUtils } = ChromeUtils.importESModule("resource://gre/modules/PromptUtils.sys.mjs");
-var EXPORTED_SYMBOLS = ["LoginManagerPromptFactory", "LoginManagerPrompter"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 
 ChromeUtils.defineESModuleGetters(this, {
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
@@ -123,7 +119,7 @@ XPCOMUtils.defineLazyPreferenceGetter(
  *
  * Invoked by [toolkit/components/prompts/src/Prompter.jsm]
  */
-function LoginManagerPromptFactory() {
+export function LoginManagerPromptFactory() {
   Logger.debug("JSComp: LoginManagerPromptFactory loaded");
 
   Services.obs.addObserver(this, "passwordmgr-crypto-login", true);
@@ -308,7 +304,7 @@ XPCOMUtils.defineLazyGetter(
  * nsILoginManagerPrompter: Used by Login Manager for saving/changing logins
  * found in HTML forms.
  */
-function LoginManagerPrompter() {
+export function LoginManagerPrompter() {
   Logger.debug("JSComp: LoginManagerPrompter.js loaded");
 }
 
@@ -1729,6 +1725,3 @@ XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "warn", () => {
 });
 
 var component = [LoginManagerPromptFactory, LoginManagerPrompter];
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory(component);
-}

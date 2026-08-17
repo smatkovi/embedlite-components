@@ -6,16 +6,13 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteSearchEngine"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 // Common helper service
-function EmbedLiteSearchEngine()
+export function EmbedLiteSearchEngine()
 {
   Logger.debug("JSComp: EmbedLiteSearchEngine.js loaded");
 }
@@ -157,6 +154,3 @@ EmbedLiteSearchEngine.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteSearchEngine]);
-}

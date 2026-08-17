@@ -5,11 +5,8 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
-var EXPORTED_SYMBOLS = ["PrivateDataManager"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -17,7 +14,7 @@ function debug(aMsg) {
   Logger.debug("PrivateDataManager.js:", aMsg);
 }
 
-function PrivateDataManager() {
+export function PrivateDataManager() {
   Logger.debug("JSComp: PrivateDataManager.js loaded");
 }
 
@@ -152,6 +149,3 @@ PrivateDataManager.prototype = {
   }
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([PrivateDataManager]);
-}

@@ -8,11 +8,8 @@
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 
-var EXPORTED_SYMBOLS = ["LoginsHelper"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
@@ -23,7 +20,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 const LoginInfo = Components.Constructor("@mozilla.org/login-manager/loginInfo;1",
                                          "nsILoginInfo", "init");
 
-function LoginsHelper() {
+export function LoginsHelper() {
   Logger.debug("JSComp: LoginsHelper.js loaded");
 }
 
@@ -131,6 +128,3 @@ LoginsHelper.prototype = {
   },
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([LoginsHelper]);
-}

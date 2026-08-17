@@ -11,11 +11,8 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteChromeManager"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { NetErrorHelper } = ChromeUtils.import("chrome://embedlite/content/NetErrorHelper.jsm")
 
 XPCOMUtils.defineLazyModuleGetters(this, {
@@ -171,7 +168,7 @@ EmbedLiteChromeListener.prototype = {
                                           Ci.nsISupportsWeakReference])
 };
 
-function EmbedLiteChromeManager()
+export function EmbedLiteChromeManager()
 {
   Logger.debug("JSComp: EmbedLiteChromeManager.js loaded");
 }
@@ -296,6 +293,3 @@ EmbedLiteChromeManager.prototype = {
                                           Ci.nsISupportsWeakReference])
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteChromeManager]);
-}

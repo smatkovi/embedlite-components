@@ -14,15 +14,12 @@ const Ci = Components.interfaces;
 const Cu = Components.utils;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedliteDownloadManager"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 ChromeUtils.defineESModuleGetters(this, {
   Downloads: "resource://gre/modules/Downloads.sys.mjs",
 });
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -185,7 +182,7 @@ let DownloadView = {
 ////////////////////////////////////////////////////////////////////////////////
 //// EmbedliteDownloadManager
 
-function EmbedliteDownloadManager()
+export function EmbedliteDownloadManager()
 {
   Logger.debug("JSComp: EmbedliteDownloadManager.js loaded");
 }
@@ -287,10 +284,6 @@ EmbedliteDownloadManager.prototype = {
     }
   }
 };
-
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedliteDownloadManager]);
-}
 
 /**
  * This DownloadSaver type creates a PDF file from the current document in a

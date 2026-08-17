@@ -6,10 +6,6 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedPrefService"];
-
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
@@ -17,7 +13,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 // Interface for requesting and setting preference values
 // -----------------------------------------------------------------------
 
-function EmbedPrefService()
+export function EmbedPrefService()
 {
   Logger.debug("JSComp: EmbedPrefService.js loaded");
 }
@@ -167,6 +163,3 @@ EmbedPrefService.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedPrefService]);
-}

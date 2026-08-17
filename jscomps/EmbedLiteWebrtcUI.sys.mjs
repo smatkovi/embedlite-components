@@ -13,12 +13,9 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteWebrtcUI"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 XPCOMUtils.defineLazyServiceGetter(this, "MediaManagerService",
                                    "@mozilla.org/mediaManagerService;1",
                                    "nsIMediaManagerService");
@@ -231,7 +228,7 @@ WebrtcPermissionRequest.prototype = {
   }
 }
 
-function EmbedLiteWebrtcUI()
+export function EmbedLiteWebrtcUI()
 {
   this._pendingRequests = []
   debug("loaded");
@@ -393,6 +390,3 @@ EmbedLiteWebrtcUI.prototype = {
   }
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteWebrtcUI]);
-}

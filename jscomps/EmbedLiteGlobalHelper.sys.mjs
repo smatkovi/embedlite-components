@@ -6,10 +6,7 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteGlobalHelper"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { LoginManagerParent } = ChromeUtils.importESModule("resource://gre/modules/LoginManagerParent.sys.mjs");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
@@ -23,7 +20,7 @@ void LoginManagerParent.recipeParentPromise;
 
 // Common helper service
 
-function EmbedLiteGlobalHelper()
+export function EmbedLiteGlobalHelper()
 {
   if (typeof L10nRegistry != "undefined" && typeof L10nFileSource != "undefined") {
     L10nRegistry.getInstance().registerSources([new L10nFileSource(
@@ -80,6 +77,3 @@ EmbedLiteGlobalHelper.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteGlobalHelper]);
-}

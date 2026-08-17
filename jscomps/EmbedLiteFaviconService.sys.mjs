@@ -6,11 +6,8 @@ const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 
-var EXPORTED_SYMBOLS = ["EmbedLiteFaviconService"];
 
-const { ComponentUtils } = ChromeUtils.importESModule("resource://gre/modules/ComponentUtils.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 ChromeUtils.defineESModuleGetters(this, {
   NetUtil: "resource://gre/modules/NetUtil.sys.mjs",
@@ -23,7 +20,7 @@ Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 // Common helper service
 
-function EmbedLiteFaviconService()
+export function EmbedLiteFaviconService()
 {
   Logger.debug("JSComp: EmbedLiteFaviconService.js loaded");
 }
@@ -185,6 +182,3 @@ EmbedLiteFaviconService.prototype = {
   QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver, Ci.nsISupportsWeakReference])
 };
 
-if (ComponentUtils.generateNSGetFactory) {
-  this.NSGetFactory = ComponentUtils.generateNSGetFactory([EmbedLiteFaviconService]);
-}
