@@ -15,7 +15,6 @@ function debug(msg) {
 }
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  Services: "resource://gre/modules/Services.sys.mjs",
 });
 
 /**

@@ -12,12 +12,9 @@
 const Ci = Components.interfaces;
 const Cu = Components.utils;
 
-const { Services } = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
-
-var EXPORTED_SYMBOLS = ["NetErrorHelper"];
 
 const KEY_CODE_ENTER = 13;
 
@@ -36,7 +33,7 @@ const KEY_CODE_ENTER = 13;
 
 var handlers = {};
 
-function NetErrorHelper(browser) {
+export function NetErrorHelper(browser) {
   browser.addEventListener("click", this.handleClick, true);
 
   let listener = () => {

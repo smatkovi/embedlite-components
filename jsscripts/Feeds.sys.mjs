@@ -5,15 +5,11 @@ const lazy = {};
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "Feeds" ];
-
-const { Services } = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
-
 ChromeUtils.defineESModuleGetters(lazy, {
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
 });
 
-var Feeds = {
+export var Feeds = {
   // Listeners are added in nsBrowserGlue.js
   receiveMessage(aMessage) {
     let data = aMessage.data;

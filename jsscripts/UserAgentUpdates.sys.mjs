@@ -9,12 +9,8 @@ const lazy = {};
 
 "use strict";
 
-var EXPORTED_SYMBOLS = ["UserAgentUpdates"];
-
 const { AppConstants } = ChromeUtils.importESModule("resource://gre/modules/AppConstants.sys.mjs");
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
-
 Cu.importGlobalProperties(["XMLHttpRequest"]);
 
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -26,17 +22,17 @@ ChromeUtils.defineESModuleGetters(lazy, {
 XPCOMUtils.defineLazyServiceGetter(
   this, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
 
-XPCOMUtils.defineLazyGetter(this, "gApp",
+XPCOMUtils.defineLazyGetter(lazy, "gApp",
   function() {
     return Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo)
                                             .QueryInterface(Ci.nsIXULRuntime);
   });
 
-XPCOMUtils.defineLazyGetter(this, "gDecoder",
+XPCOMUtils.defineLazyGetter(lazy, "gDecoder",
   function() { return new TextDecoder(); }
 );
 
-XPCOMUtils.defineLazyGetter(this, "gEncoder",
+XPCOMUtils.defineLazyGetter(lazy, "gEncoder",
   function() { return new TextEncoder(); }
 );
 
@@ -83,7 +79,7 @@ function readChannel(url) {
   });
 }
 
-var UserAgentUpdates = {
+export var UserAgentUpdates = {
   init: function(callback) {
     if (gInitialized) {
       return;

@@ -1,3 +1,4 @@
+const lazy = {};
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,17 +9,14 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "UserAgentOverrides" ];
-
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { Services } = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
 const { UserAgentUpdates } = ChromeUtils.importESModule("chrome://embedlite/content/UserAgentUpdates.sys.mjs");
 
 const PREF_OVERRIDES_ENABLED = "general.useragent.site_specific_overrides";
 const MAX_OVERRIDE_FOR_HOST_CACHE_SIZE = 250;
 
 // lazy load nsHttpHandler to improve startup performance.
-XPCOMUtils.defineLazyGetter(this, "DEFAULT_UA", function() {
+XPCOMUtils.defineLazyGetter(lazy, "DEFAULT_UA", function() {
   return Cc["@mozilla.org/network/protocol;1?name=http"]
            .getService(Ci.nsIHttpProtocolHandler)
            .userAgent;
@@ -34,7 +32,7 @@ var gOverrideFunctions = [
 ];
 var gBuiltUAs = new Map;
 
-var UserAgentOverrides = {
+export var UserAgentOverrides = {
   init: function uao_init() {
     if (gInitialized)
       return;

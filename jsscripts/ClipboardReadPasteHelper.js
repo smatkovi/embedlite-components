@@ -3,7 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 (function(global) {
-var Services = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs").Services;
 
 var ClipboardReadPasteHelper = global.ClipboardReadPasteHelper || {};
 

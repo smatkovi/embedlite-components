@@ -5,10 +5,6 @@ const lazy = {};
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "ContentLinkHandler" ];
-
-const { Services } = ChromeUtils.importESModule("resource://gre/modules/Services.sys.mjs");
-
 ChromeUtils.defineModuleGetter(this, "Feeds",
   "chrome://embedlite/content/Feeds.sys.mjs");
 ChromeUtils.defineESModuleGetters(lazy, {
@@ -276,7 +272,7 @@ function handleFaviconLink(aLink, aIsRichIcon, aChromeGlobal, aFaviconLoads) {
   return true;
 }
 
-var ContentLinkHandler = {
+export var ContentLinkHandler = {
   init(chromeGlobal) {
     const faviconLoads = new Map();
     chromeGlobal.addEventListener("DOMLinkAdded", event => {
