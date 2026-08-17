@@ -5,8 +5,7 @@ const lazy = {};
 
 "use strict";
 
-ChromeUtils.defineModuleGetter(this, "Feeds",
-  "chrome://embedlite/content/Feeds.sys.mjs");
+ChromeUtils.defineESModuleGetters(lazy, { Feeds: "chrome://embedlite/content/lazy.Feeds.sys.mjs" });
 ChromeUtils.defineESModuleGetters(lazy, {
   BrowserUtils: "resource://gre/modules/BrowserUtils.sys.mjs",
 });
@@ -320,7 +319,7 @@ export var ContentLinkHandler = {
             if (!rels.feed && rels.alternate && rels.stylesheet)
               break;
 
-            if (Feeds.isValidFeed(link, link.ownerDocument.nodePrincipal, "feed" in rels)) {
+            if (lazy.Feeds.isValidFeed(link, link.ownerDocument.nodePrincipal, "feed" in rels)) {
               chromeGlobal.sendAsyncMessage("Link:AddFeed",
                                             {type: link.type,
                                              href: link.href,
