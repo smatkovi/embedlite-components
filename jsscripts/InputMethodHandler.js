@@ -14,9 +14,6 @@ function debug(msg) {
   Logger.debug("InputMethodHandler.js -", msg);
 }
 
-ChromeUtils.defineESModuleGetters(lazy, {
-});
-
 /**
   * InputMethodHandler
   *

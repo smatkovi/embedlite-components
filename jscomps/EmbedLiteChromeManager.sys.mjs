@@ -38,7 +38,7 @@ function EmbedLiteChromeListener(aWindow)
   this.docShell = aWindow.docShell;
   this.blockedPopups = {};
   this.nextBlockedPopupId = 0;
-  ContentLinkHandler.init(this);
+  lazy.ContentLinkHandler.init(this);
 }
 
 EmbedLiteChromeListener.prototype = {
