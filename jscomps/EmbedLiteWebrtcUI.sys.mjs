@@ -16,7 +16,9 @@ const Cu = Components.utils;
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
-XPCOMUtils.defineLazyServiceGetter(this, "MediaManagerService",
+const lazy = {};
+
+XPCOMUtils.defineLazyServiceGetter(lazy, "MediaManagerService",
                                    "@mozilla.org/mediaManagerService;1",
                                    "nsIMediaManagerService");
 
@@ -356,7 +358,7 @@ EmbedLiteWebrtcUI.prototype = {
         break;
 
       case "recording-device-events":
-        let windows = MediaManagerService.activeMediaCaptureWindows;
+        let windows = lazy.MediaManagerService.activeMediaCaptureWindows;
         let webrtcMediaInfo = { "video": false, "audio": false};
 
         for (let i = 0; i < windows.length; i++) {
@@ -368,7 +370,7 @@ EmbedLiteWebrtcUI.prototype = {
           let browserShare = {};
           let mediaDevices = {};
 
-          MediaManagerService.mediaCaptureWindowState(
+          lazy.MediaManagerService.mediaCaptureWindowState(
             win,
             hasCamera,
             hasMicrophone,
@@ -377,9 +379,9 @@ EmbedLiteWebrtcUI.prototype = {
             browserShare,
             mediaDevices,
             true /* aIncludeDescendants */);
-          if (hasCamera.value != MediaManagerService.STATE_NOCAPTURE)
+          if (hasCamera.value != lazy.MediaManagerService.STATE_NOCAPTURE)
             webrtcMediaInfo.video = true;
-          if (hasMicrophone.value != MediaManagerService.STATE_NOCAPTURE)
+          if (hasMicrophone.value != lazy.MediaManagerService.STATE_NOCAPTURE)
             webrtcMediaInfo.audio = true;
         }
 
