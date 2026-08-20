@@ -20,19 +20,19 @@ ChromeUtils.defineESModuleGetters(lazy, {
 });
 
 XPCOMUtils.defineLazyServiceGetter(
-  this, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
+  lazy, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
 
-XPCOMUtils.defineLazyGetter(lazy, "gApp",
+ChromeUtils.defineLazyGetter(lazy, "gApp",
   function() {
     return Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo)
                                             .QueryInterface(Ci.nsIXULRuntime);
   });
 
-XPCOMUtils.defineLazyGetter(lazy, "gDecoder",
+ChromeUtils.defineLazyGetter(lazy, "gDecoder",
   function() { return new TextDecoder(); }
 );
 
-XPCOMUtils.defineLazyGetter(lazy, "gEncoder",
+ChromeUtils.defineLazyGetter(lazy, "gEncoder",
   function() { return new TextEncoder(); }
 );
 
@@ -58,17 +58,17 @@ var gInitialized = false;
 function readChannel(url) {
   return new Promise((resolve, reject) => {
     try {
-      let channel = NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true});
+      let channel = lazy.NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true});
       channel.contentType = "application/json";
 
-      NetUtil.asyncFetch(channel, (inputStream, status) => {
+      lazy.NetUtil.asyncFetch(channel, (inputStream, status) => {
         if (!Components.isSuccessCode(status)) {
           reject();
           return;
         }
 
         let data = JSON.parse(
-          NetUtil.readInputStreamToString(inputStream, inputStream.available())
+          lazy.NetUtil.readInputStreamToString(inputStream, inputStream.available())
         );
         resolve(data);
       });
@@ -120,7 +120,7 @@ export var UserAgentUpdates = {
     let dirs = [KEY_PREFDIR, KEY_APPDIR];
 
     dirs.reduce((prevLoad, dir) => {
-      let file = FileUtils.getFile(dir, [FILE_UPDATES], true).path;
+      let file = lazy.FileUtils.getFile(dir, [FILE_UPDATES], true).path;
       // tryNext returns promise to read file under dir and parse it
       let tryNext = () => IOUtils.read(file).then(
         (bytes) => {
@@ -149,7 +149,7 @@ export var UserAgentUpdates = {
   },
 
   _saveToFile: function(update) {
-    let file = FileUtils.getFile(KEY_PREFDIR, [FILE_UPDATES], true);
+    let file = lazy.FileUtils.getFile(KEY_PREFDIR, [FILE_UPDATES], true);
     let path = file.path;
     let bytes = gEncoder.encode(JSON.stringify(update));
     IOUtils.write(path, bytes, { tmpPath: path + ".tmp" }).then(
@@ -182,7 +182,7 @@ export var UserAgentUpdates = {
       "%APP_VERSION%": function() { return gApp.version; },
       "%BUILD_ID%": function() { return gApp.appBuildID; },
       "%OS%": function() { return gApp.OS; },
-      "%CHANNEL%": function() { return UpdateUtils.UpdateChannel; },
+      "%CHANNEL%": function() { return lazy.UpdateUtils.UpdateChannel; },
       "%DISTRIBUTION%": function() { return this._getPref(PREF_APP_DISTRIBUTION, ""); },
       "%DISTRIBUTION_VERSION%": function() { return this._getPref(PREF_APP_DISTRIBUTION_VERSION, ""); },
     };
@@ -237,7 +237,7 @@ export var UserAgentUpdates = {
     if (retry) {
       interval = this._getPref(PREF_UPDATES_RETRY, interval);
     }
-    gUpdateTimer.registerTimer(TIMER_ID, this, Math.max(1, interval));
+    lazy.gUpdateTimer.registerTimer(TIMER_ID, this, Math.max(1, interval));
   },
 
   notify: function(timer) {

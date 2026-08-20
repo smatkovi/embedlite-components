@@ -282,7 +282,7 @@ LoginManagerPromptFactory.prototype = {
   },
 }; // end of LoginManagerPromptFactory implementation
 
-XPCOMUtils.defineLazyGetter(
+ChromeUtils.defineLazyGetter(
   this.LoginManagerPromptFactory.prototype,
   "log",
   () => {
@@ -1715,12 +1715,12 @@ LoginManagerPrompter.prototype = {
 
 }; // end of LoginManagerPrompter implementation
 
-XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "log", () => {
+ChromeUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "log", () => {
   let logger = Logger
   return logger.debug.bind(logger);
 });
 
-XPCOMUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "warn", () => {
+ChromeUtils.defineLazyGetter(this.LoginManagerPrompter.prototype, "warn", () => {
   let logger = Logger
   return logger.warn.bind(logger);
 });

@@ -31,7 +31,7 @@ const {
 } = ChromeUtils.importESModule("resource://gre/modules/DownloadCore.sys.mjs");
 
 XPCOMUtils.defineLazyServiceGetter(
-  this,
+  lazy,
   "gPrintSettingsService",
   "@mozilla.org/gfx/printsettings-service;1",
   Ci.nsIPrintSettingsService
@@ -203,7 +203,7 @@ EmbedliteDownloadManager.prototype = {
         Services.obs.removeObserver(this, "profile-after-change");
         Services.obs.addObserver(this, "embedui:download", false);
         (async function() {
-          let downloadList = await Downloads.getList(Downloads.ALL);
+          let downloadList = await lazy.Downloads.getList(lazy.Downloads.ALL);
 
           // Let's remove all existing downloads from the Download List
           // before adding the view so that partial (cancelled) downloads
@@ -226,7 +226,7 @@ EmbedliteDownloadManager.prototype = {
         switch (data.msg) {
           case "retryDownload":
             (async function() {
-              let downloadList = await Downloads.getList(Downloads.ALL);
+              let downloadList = await lazy.Downloads.getList(lazy.Downloads.ALL);
               let list = await downloadList.getAll();
               for (let download of list) {
                 if (download.id === data.id) {
@@ -239,7 +239,7 @@ EmbedliteDownloadManager.prototype = {
 
           case "cancelDownload":
             (async function() {
-              let downloadList = await Downloads.getList(Downloads.ALL);
+              let downloadList = await lazy.Downloads.getList(lazy.Downloads.ALL);
               let list = await downloadList.getAll();
               for (let download of list) {
                 if (download.id === data.id) {
@@ -255,8 +255,8 @@ EmbedliteDownloadManager.prototype = {
 
           case "addDownload":
             (async function() {
-              let list = await Downloads.getList(Downloads.ALL);
-              let download = await Downloads.createDownload({
+              let list = await lazy.Downloads.getList(lazy.Downloads.ALL);
+              let download = await lazy.Downloads.createDownload({
                 source: data.from,
                 target: data.to
               });
@@ -268,7 +268,7 @@ EmbedliteDownloadManager.prototype = {
           case "saveAsPdf":
             if (Services.ww.activeWindow) {
               (async function() {
-                let list = await Downloads.getList(Downloads.ALL);
+                let list = await lazy.Downloads.getList(lazy.Downloads.ALL);
                 let download = await DownloadPDFSaver.createDownload({
                   source: Services.ww.activeWindow,
                   target: data.to
@@ -340,7 +340,7 @@ DownloadPDFSaver.prototype = {
     // An empty target file must exist for the PDF printer to work correctly.
     await IOUtils.writeUTF8(targetPath, "");
 
-    let printSettings = gPrintSettingsService.createNewPrintSettings();
+    let printSettings = lazy.gPrintSettingsService.createNewPrintSettings();
 
     printSettings.outputFormat = Ci.nsIPrintSettings.kOutputFormatPDF;
     printSettings.outputDestination =
@@ -420,7 +420,7 @@ DownloadPDFSaver.prototype = {
  * @return The newly created DownloadPDFSaver object.
  */
 DownloadPDFSaver.createDownload = async function(aProperties) {
-  let download = await Downloads.createDownload({
+  let download = await lazy.Downloads.createDownload({
     source: aProperties.source.location.href,
     target: aProperties.target,
     contentType: "application/pdf"
