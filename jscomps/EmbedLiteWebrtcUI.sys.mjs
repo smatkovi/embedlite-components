@@ -81,6 +81,8 @@ const GlobalMuteListener = {
   },
 };
 
+function devLabel(d) { return d.rawName || d.id || d.type; }
+
 function WebrtcPermissionRequest(uri, principal, devices, constraints, callID) {
   this.uri = uri;
   this.principal = principal;
@@ -92,7 +94,7 @@ function WebrtcPermissionRequest(uri, principal, devices, constraints, callID) {
   let videoDevices = []
   for (let dev of devices) {
     let device = dev.QueryInterface(Ci.nsIMediaDevice);
-    debug("Found " + device.type + " device '" + device.name + "'");
+    debug("Found " + device.type + " device '" + devLabel(device) + "'");
     switch (device.type) {
       case "audioinput":
         if (constraints.audio)
@@ -147,7 +149,7 @@ WebrtcPermissionRequest.prototype = {
       // Iterate over devices in the dict and get their names:
       // {devType: [nsIMediaDevice]} -> {devType: [string]}
       devices: Object.keys(permsToAsk).reduce((result, key) => {
-          result[key] = permsToAsk[key].map(dev => dev.name);
+          result[key] = permsToAsk[key].map(dev => devLabel(dev));
           return result;
       }, {})
     };
