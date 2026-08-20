@@ -3,7 +3,7 @@ jscomps_manifest_DATA = \
 	EmbedLiteJSComponents.manifest \
 	AboutRedirector.sys.mjs \
 	LoginManagerPrompter.sys.mjs \
-	HelperAppDialog.js \
+	HelperAppDialog.sys.mjs \
 	EmbedPrefService.sys.mjs \
 	FilePicker.js \
 	ContentPermissionPrompt.sys.mjs \
