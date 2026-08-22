@@ -45,6 +45,15 @@ EmbedLiteGlobalHelper.prototype = {
         Services.obs.addObserver(this, "invalidformsubmit", false);
         Services.obs.addObserver(this, "xpcom-shutdown", false);
         Services.obs.addObserver(this, "profile-after-change", false);
+        // WebAuthn PIN/selection prompts: Firefox wires the toolkit helper through
+        // ObserverForwarder; EmbedLite registers the observer directly.
+        try {
+          const { WebAuthnPromptHelper } = ChromeUtils.importESModule(
+            "moz-src:///toolkit/modules/WebAuthnPromptHelper.sys.mjs");
+          Services.obs.addObserver(WebAuthnPromptHelper, "webauthn-prompt");
+        } catch (e) {
+          Logger.debug("EmbedLiteGlobalHelper: WebAuthnPromptHelper unavailable: " + e);
+        }
 
         Services.ppmm.loadProcessScript(
           "chrome://global/content/process-content.js",
