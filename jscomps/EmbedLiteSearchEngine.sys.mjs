@@ -2,6 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const lazy = {};
+// Search is an ES module in ESR 153; the lazy.SearchService XPCOM service is gone.
+ChromeUtils.defineESModuleGetters(lazy, {
+  SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+});
+
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
@@ -27,7 +33,7 @@ EmbedLiteSearchEngine.prototype = {
       return;
     }
 
-    Services.search.getEngines().then((engines) => {
+    lazy.SearchService.getEngines().then((engines) => {
       let engineNames = engines.map(function (element) {
         return element.name;
       });
@@ -35,7 +41,7 @@ EmbedLiteSearchEngine.prototype = {
       let defaultEngine = null;
       if (enginesAvailable) {
         try {
-          defaultEngine = Services.search.defaultEngine;
+          defaultEngine = lazy.SearchService.defaultEngine;
         } catch (e) {
           Logger.warn("EmbedLiteSearchEngine failed to get default engine:", e);
         }
@@ -75,7 +81,7 @@ EmbedLiteSearchEngine.prototype = {
             break;
           }
           case "loadxml": {
-            Services.search.addOpenSearchEngine(data.uri, null).then(
+            lazy.SearchService.addOpenSearchEngine(data.uri, null).then(
               engine => {
                 var message = {
                   "msg": "search-engine-added",
@@ -97,7 +103,7 @@ EmbedLiteSearchEngine.prototype = {
             break;
           }
           case "setdefault": {
-            var engine = Services.search.getEngineByName(data.name);
+            var engine = lazy.SearchService.getEngineByName(data.name);
             if (!engine) {
               Logger.warn("EmbedLiteSearchEngine could not find engine:", data.name);
               var missingEngineMessage = {
@@ -108,7 +114,7 @@ EmbedLiteSearchEngine.prototype = {
               Services.obs.notifyObservers(null, "embed:search", JSON.stringify(missingEngineMessage));
               break;
             }
-            Services.search.setDefault(engine, Ci.nsISearchService.CHANGE_REASON_USER).then(
+            lazy.SearchService.setDefault(engine, lazy.SearchService.CHANGE_REASON.USER).then(
               () => {
                 try {
                   Services.prefs.setStringPref("browser.search.defaultenginename", engine.name);

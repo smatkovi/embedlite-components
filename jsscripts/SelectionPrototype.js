@@ -1,6 +1,14 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+// Search is an ES module in ESR 153; frame scripts reach it through a lazy getter.
+var lazySearch = this.lazySearch || {};
+if (!("SearchService" in lazySearch)) {
+  ChromeUtils.defineESModuleGetters(lazySearch, {
+    SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+  });
+}
+
 "use strict";
 
 /*
@@ -324,9 +332,9 @@ SelectionPrototype.prototype = {
 
     let searchUri = "";
     try {
-      let searchEngine = Services.search.defaultEngine;
+      let searchEngine = lazySearch.SearchService.defaultEngine;
       if (searchEngine) {
-        searchUri = Services.search.defaultEngine.getSubmission(this._cache.text).uri.spec;
+        searchUri = lazySearch.SearchService.defaultEngine.getSubmission(this._cache.text).uri.spec;
       }
     } catch (e) {
       Logger.warn("Failed to get current search engine:", e)

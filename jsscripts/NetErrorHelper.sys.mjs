@@ -5,6 +5,12 @@
  * Copyright (c) 2020 Open Mobile Platform LLC.
  */
 
+const lazy = {};
+// Search is an ES module in ESR 153; the lazy.SearchService XPCOM service is gone.
+ChromeUtils.defineESModuleGetters(lazy, {
+  SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+});
+
 "use strict";
 
 // For the Android variant see gecko-dev/mobile/android/modules/NetErrorHelper.jsm
@@ -103,7 +109,7 @@ handlers.searchbutton = {
   },
 
   doSearch: function(value) {
-    let engine = Services.search.defaultEngine;
+    let engine = lazy.SearchService.defaultEngine;
     let uri = engine.getSubmission(value).uri;
 
     // Reset the user search to whatever the new search term was
