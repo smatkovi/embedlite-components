@@ -399,7 +399,7 @@ LoginManagerPrompter.prototype = {
 
       let winId;
       try {
-        winId = Services.embedlite.getIDByWindow(win);
+        winId = Services.embedlite.getIDByWindow(win.top);
       } catch (e) {
         this.warn("LoginManagerPrompter: unable to find window id", e);
         resolve(false);
@@ -1639,7 +1639,7 @@ LoginManagerPrompter.prototype = {
 
     Services.embedlite.addMessageListener("embedui:login", this);
     try {
-      var winid = Services.embedlite.getIDByWindow(notifyWin);
+      var winid = Services.embedlite.getIDByWindow(notifyWin.top);
       let uniqueid = this._getRandomId();
       Services.embedlite.sendAsyncMessage(winid, "embed:login",
                                           JSON.stringify({

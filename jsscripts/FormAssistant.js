@@ -170,7 +170,7 @@ FormAssistant.prototype = {
         return;
       }
 
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
+      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
       Services.embedlite.sendAsyncMessage(winId, "FormAssist:AutoCompleteResult",
                                           JSON.stringify(suggestions));
 
@@ -187,7 +187,7 @@ FormAssistant.prototype = {
     * _hideFormAssistPopup() in FormAssistant.jsm
     */
   _hideFormAssist: function(aElement) {
-    let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
+    let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
     Services.embedlite.sendAsyncMessage(winId, "FormAssist:Hide", "[]");
   },
 

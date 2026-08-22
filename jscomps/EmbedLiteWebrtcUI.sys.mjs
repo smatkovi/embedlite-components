@@ -298,7 +298,7 @@ EmbedLiteWebrtcUI.prototype = {
 
     let uri = aContentWindow.document.documentURIObject;
     let principal = Services.scriptSecurityManager.createContentPrincipal(uri, {});
-    let winId = Services.embedlite.getIDByWindow(aContentWindow);
+    let winId = Services.embedlite.getIDByWindow(aContentWindow.top);
 
     let request = new WebrtcPermissionRequest(uri, principal, aDevices, aConstraints, aCallID);
     this._submitRequest(request, winId)

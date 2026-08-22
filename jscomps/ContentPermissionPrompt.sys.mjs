@@ -146,7 +146,7 @@ ContentPermissionPrompt.prototype = {
 
     Services.embedlite.addMessageListener("embedui:permissions", this);
     try {
-      var winId = Services.embedlite.getIDByWindow(request.window);
+      var winId = Services.embedlite.getIDByWindow(request.window.top);
       Services.embedlite.sendAsyncMessage(winId, "embed:permissions",
                                           JSON.stringify({title: entityName,
                                                           host: request.principal.URI.host,
