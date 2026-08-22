@@ -52,6 +52,7 @@ EmbedLiteSearchEngine.prototype = {
         defaultEngine: defaultEngine ? defaultEngine.name : null
       }
       this._initSent = true;
+      Logger.warn("EmbedLiteSearchEngine: init -> " + JSON.stringify(messg));
       Services.obs.notifyObservers(null, "embed:search", JSON.stringify(messg));
     }, (error) => {
       Logger.warn("EmbedLiteSearchEngine init failed:", error);
@@ -77,6 +78,7 @@ EmbedLiteSearchEngine.prototype = {
         var data = JSON.parse(aData);
         switch (data.msg) {
           case "init": {
+            Logger.warn("EmbedLiteSearchEngine: embedui:search " + JSON.stringify(data));
             this._notifyInit(true);
             break;
           }
