@@ -3,7 +3,18 @@
 // top-level window only.
 function viewIdFor(aThing) {
   let win = aThing.ownerGlobal || aThing.defaultView || aThing;
-  return Services.embedlite.getIDByWindow(win.top);
+  try {
+    return Services.embedlite.getIDByWindow(win.top);
+  } catch (e) {
+    let desc = Object.prototype.toString.call(aThing);
+    try {
+      desc += " " + (win.location ? win.location.href : "(no location)") +
+              " top=" + (win.top && win.top.location ? win.top.location.href : "?") +
+              " chrome=" + (win.isChromeWindow === true);
+    } catch (e2) {}
+    Logger.warn("viewIdFor: no view for " + desc);
+    throw e;
+  }
 }
 var lazy = {};
 /* This Source Code Form is subject to the terms of the Mozilla Public
