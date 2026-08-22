@@ -1,4 +1,4 @@
-jsscripts_manifestdir=$(libdir)/mozembedlite-next/chrome/embedlite/content
+jsscripts_manifestdir=$(libdir)/mozembedlite-next153/chrome/embedlite/content
 jsscripts_manifest_DATA = \
 	embedhelper.js \
 	Logger.js \
@@ -19,12 +19,12 @@ jsscripts_manifest_DATA = \
 	NetErrorHelper.sys.mjs \
 	$(NULL)
 
-sync_engine_manifestdir=$(libdir)/mozembedlite-next/chrome/embedlite/content/sync
+sync_engine_manifestdir=$(libdir)/mozembedlite-next153/chrome/embedlite/content/sync
 sync_engine_manifest_DATA = \
 	sync/bookmarks.js \
 	$(NULL)
 
-manifestsscript_manifestdir=$(libdir)/mozembedlite-next/chrome
+manifestsscript_manifestdir=$(libdir)/mozembedlite-next153/chrome
 manifestsscript_manifest_DATA = \
 	EmbedLiteJSScripts.manifest \
 	$(NULL)

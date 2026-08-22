@@ -1,4 +1,4 @@
-jscomps_manifestdir=$(libdir)/mozembedlite-next/components
+jscomps_manifestdir=$(libdir)/mozembedlite-next153/components
 jscomps_manifest_DATA = \
 	EmbedLiteJSComponents.manifest \
 	AboutRedirector.sys.mjs \
