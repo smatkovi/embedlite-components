@@ -1,3 +1,10 @@
+// Resolve the EmbedLite view id for a node, a document or a window (focus
+// events inside iframes can target any of them); views belong to the
+// top-level window only.
+function viewIdFor(aThing) {
+  let win = aThing.ownerGlobal || aThing.defaultView || aThing;
+  return Services.embedlite.getIDByWindow(win.top);
+}
 var lazy = {};
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -99,7 +106,7 @@ InputMethodHandler.prototype = {
     }
 
     try {
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
+      let winId = viewIdFor(aElement);
       Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:SetInputContext",
                                           JSON.stringify({surroundingText: aElement.value,
                                                           cursorPosition: aElement.selectionStart,
@@ -111,7 +118,7 @@ InputMethodHandler.prototype = {
 
   _resetInputContext: function(aElement) {
     try {
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
+      let winId = viewIdFor(aElement);
       Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:ResetInputContext", "[]");
     } catch (e) {
       Logger.warn("InputMethodHandler: sending async message failed", e);
@@ -120,7 +127,7 @@ InputMethodHandler.prototype = {
 
   _sendInputAttributes: function(aElement) {
     try {
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
+      let winId = viewIdFor(aElement);
       Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:SetInputAttributes",
                                           JSON.stringify({autocomplete: aElement.getAttribute("autocomplete"),
                                                           autocapitalize: aElement.getAttribute("autocapitalize")}));
@@ -131,7 +138,7 @@ InputMethodHandler.prototype = {
 
   _resetInputAttributes: function(aElement) {
     try {
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
+      let winId = viewIdFor(aElement);
       Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:ResetInputAttributes", "[]");
     } catch (e) {
       Logger.warn("InputMethodHandler: sending async message failed", e);

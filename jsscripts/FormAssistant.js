@@ -1,3 +1,10 @@
+// Resolve the EmbedLite view id for a node, a document or a window (focus
+// events inside iframes can target any of them); views belong to the
+// top-level window only.
+function viewIdFor(aThing) {
+  let win = aThing.ownerGlobal || aThing.defaultView || aThing;
+  return Services.embedlite.getIDByWindow(win.top);
+}
 var lazy = {};
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -170,7 +177,7 @@ FormAssistant.prototype = {
         return;
       }
 
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
+      let winId = viewIdFor(aElement);
       Services.embedlite.sendAsyncMessage(winId, "FormAssist:AutoCompleteResult",
                                           JSON.stringify(suggestions));
 
@@ -187,7 +194,7 @@ FormAssistant.prototype = {
     * _hideFormAssistPopup() in FormAssistant.jsm
     */
   _hideFormAssist: function(aElement) {
-    let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
+    let winId = viewIdFor(aElement);
     Services.embedlite.sendAsyncMessage(winId, "FormAssist:Hide", "[]");
   },
 
