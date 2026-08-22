@@ -2,7 +2,13 @@
 // events inside iframes can target any of them); views belong to the
 // top-level window only.
 function viewIdFor(aThing) {
-  let win = aThing.ownerGlobal || aThing.defaultView || aThing;
+  let win = aThing.ownerGlobal || aThing.defaultView ||
+            (aThing.document ? aThing : null);
+  if (!win) {
+    // A node whose document is already torn down (e.g. a reloaded iframe):
+    // there is no view to talk to, and nothing to report.
+    return null;
+  }
   try {
     return Services.embedlite.getIDByWindow(win.top);
   } catch (e) {
@@ -189,6 +195,12 @@ FormAssistant.prototype = {
       }
 
       let winId = viewIdFor(aElement);
+
+      if (winId === null) {
+
+        return;
+
+      }
       Services.embedlite.sendAsyncMessage(winId, "FormAssist:AutoCompleteResult",
                                           JSON.stringify(suggestions));
 
@@ -206,6 +218,9 @@ FormAssistant.prototype = {
     */
   _hideFormAssist: function(aElement) {
     let winId = viewIdFor(aElement);
+    if (winId === null) {
+      return;
+    }
     Services.embedlite.sendAsyncMessage(winId, "FormAssist:Hide", "[]");
   },
 
