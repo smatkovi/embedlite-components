@@ -99,7 +99,7 @@ InputMethodHandler.prototype = {
     }
 
     try {
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
+      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
       Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:SetInputContext",
                                           JSON.stringify({surroundingText: aElement.value,
                                                           cursorPosition: aElement.selectionStart,
@@ -111,7 +111,7 @@ InputMethodHandler.prototype = {
 
   _resetInputContext: function(aElement) {
     try {
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
+      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
       Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:ResetInputContext", "[]");
     } catch (e) {
       Logger.warn("InputMethodHandler: sending async message failed", e);
@@ -120,7 +120,7 @@ InputMethodHandler.prototype = {
 
   _sendInputAttributes: function(aElement) {
     try {
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
+      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
       Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:SetInputAttributes",
                                           JSON.stringify({autocomplete: aElement.getAttribute("autocomplete"),
                                                           autocapitalize: aElement.getAttribute("autocapitalize")}));
@@ -131,7 +131,7 @@ InputMethodHandler.prototype = {
 
   _resetInputAttributes: function(aElement) {
     try {
-      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal);
+      let winId = Services.embedlite.getIDByWindow(aElement.ownerGlobal.top);
       Services.embedlite.sendAsyncMessage(winId, "InputMethodHandler:ResetInputAttributes", "[]");
     } catch (e) {
       Logger.warn("InputMethodHandler: sending async message failed", e);
