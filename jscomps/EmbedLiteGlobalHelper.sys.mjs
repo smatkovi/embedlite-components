@@ -51,6 +51,9 @@ EmbedLiteGlobalHelper.prototype = {
           const { WebAuthnPromptHelper } = ChromeUtils.importESModule(
             "moz-src:///toolkit/modules/WebAuthnPromptHelper.sys.mjs");
           Services.obs.addObserver(WebAuthnPromptHelper, "webauthn-prompt");
+          Services.obs.addObserver((aSubject, aTopic, aData) => {
+            Logger.warn("webauthn-prompt: " + aData);
+          }, "webauthn-prompt");
         } catch (e) {
           Logger.debug("EmbedLiteGlobalHelper: WebAuthnPromptHelper unavailable: " + e);
         }
