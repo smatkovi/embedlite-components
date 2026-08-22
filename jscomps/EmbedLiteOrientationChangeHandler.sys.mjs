@@ -12,7 +12,7 @@ const { OrientationChangeHandler } = ChromeUtils.importESModule("chrome://embedl
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                    "@mozilla.org/embedlite-app-service;1",
-                                   "nsIEmbedAppService");
+                                   Ci.nsIEmbedAppService);
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 

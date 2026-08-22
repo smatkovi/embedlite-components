@@ -20,7 +20,7 @@ ChromeUtils.defineESModuleGetters(lazy, {
 });
 
 XPCOMUtils.defineLazyServiceGetter(
-  lazy, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", "nsIUpdateTimerManager");
+  lazy, "gUpdateTimer", "@mozilla.org/updates/timer-manager;1", Ci.nsIUpdateTimerManager);
 
 ChromeUtils.defineLazyGetter(lazy, "gApp",
   function() {

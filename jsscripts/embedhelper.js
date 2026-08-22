@@ -30,11 +30,8 @@ Cu.importGlobalProperties(["InspectorUtils"]);
 
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
-                                    "nsIEmbedAppService");
+                                    Ci.nsIEmbedAppService);
 
-XPCOMUtils.defineLazyServiceGetter(Services, "locale",
-                                    "@mozilla.org/intl/localeservice;1",
-                                    "mozILocaleService");
 
 var globalObject = null;
 var gScreenWidth = 0;

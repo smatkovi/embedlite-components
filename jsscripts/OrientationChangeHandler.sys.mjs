@@ -11,7 +11,7 @@ const Ci = Components.interfaces;
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
                                     "@mozilla.org/embedlite-app-service;1",
-                                    "nsIEmbedAppService");
+                                    Ci.nsIEmbedAppService);
 export function OrientationChangeHandler(window) {
   this.docShell = window.docShell;
 

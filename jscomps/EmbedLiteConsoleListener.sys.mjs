@@ -12,9 +12,6 @@ const Cr = Components.results;
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
-XPCOMUtils.defineLazyServiceGetter(Services, 'env',
-                                  '@mozilla.org/process/environment;1',
-                                  'nsIEnvironment');
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 

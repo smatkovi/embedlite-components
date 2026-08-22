@@ -20,7 +20,7 @@ const lazy = {};
 
 XPCOMUtils.defineLazyServiceGetter(lazy, "MediaManagerService",
                                    "@mozilla.org/mediaManagerService;1",
-                                   "nsIMediaManagerService");
+                                   Ci.nsIMediaManagerService);
 
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
