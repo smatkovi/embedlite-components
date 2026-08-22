@@ -92,6 +92,7 @@ EmbedLiteSearchEngine.prototype = {
               },
               errorCode => {
                 // For failure conditions see nsISearchService.idl
+                Logger.warn("EmbedLiteSearchEngine: addOpenSearchEngine failed for " + data.uri + ": " + errorCode);
                 var message = {
                   "msg": "search-engine-added",
                   "engine": "",
