@@ -76,9 +76,9 @@ EmbedLiteSearchEngine.prototype = {
       }
       case "embedui:search": {
         var data = JSON.parse(aData);
+        Logger.warn("EmbedLiteSearchEngine: embedui:search " + JSON.stringify(data));
         switch (data.msg) {
           case "init": {
-            Logger.warn("EmbedLiteSearchEngine: embedui:search " + JSON.stringify(data));
             this._notifyInit(true);
             break;
           }
