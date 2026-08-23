@@ -183,9 +183,12 @@ EmbedHelper.prototype = {
         let sessionHistory = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
         let legacyHistory;
         try {
-          // legacySHistory is gone in ESR 153; nsISHistory offers the same
-          // methods directly.
-          legacyHistory = sessionHistory.QueryInterface(Ci.nsISHistory);
+          // legacySHistory is gone in ESR 153; sessionHistory already is
+          // the nsISHistory and needs no QueryInterface.
+          legacyHistory = sessionHistory;
+          if (!legacyHistory || typeof legacyHistory.createEntry != "function") {
+            throw new Error("session history has no nsISHistory methods");
+          }
         } catch (e) {
           Logger.warn("Warning: legacy session history is not available", e);
           break;

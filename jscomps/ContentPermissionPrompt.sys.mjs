@@ -40,7 +40,7 @@ ContentPermissionPrompt.prototype = {
   // Whether we are in private browsing mode
   _getInPrivateBrowsing: function(window) {
     if (window) {
-      return PrivateBrowsingUtils.isContentWindowPrivate(window);
+      return lazy.PrivateBrowsingUtils.isContentWindowPrivate(window);
     }
     // Assume that we're in private browsing mode if the caller did
     // not provide a window.  The callers which really care about this
