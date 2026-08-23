@@ -48,7 +48,7 @@ EmbedLiteSearchEngine.prototype = {
         url += (url.includes("?") ? "&" : "?") + query;
       }
       let engine = await lazy.SearchService.addUserEngine({
-        name: parsed.data.shortName,
+        name: parsed.data.name,
         url,
       });
       message.engine = (engine && engine.name) || "";
