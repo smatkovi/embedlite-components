@@ -19,6 +19,7 @@ const Cr = Components.results;
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 
 ChromeUtils.defineESModuleGetters(lazy, {
+  PrivateBrowsingUtils: "resource://gre/modules/lazy.PrivateBrowsingUtils.sys.mjs",
   Downloads: "resource://gre/modules/Downloads.sys.mjs",
 });
 
@@ -37,7 +38,7 @@ XPCOMUtils.defineLazyServiceGetter(
   Ci.nsIPrintSettingsService
 );
 
-const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
+const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/lazy.PrivateBrowsingUtils.sys.mjs");
 
 ////////////////////////////////////////////////////////////////////////////////
 //// DownloadViewer
@@ -425,7 +426,7 @@ DownloadPDFSaver.createDownload = async function(aProperties) {
     target: aProperties.target,
     contentType: "application/pdf"
   });
-  download.source.isPrivate = PrivateBrowsingUtils.isContentWindowPrivate(
+  download.source.isPrivate = lazy.PrivateBrowsingUtils.isContentWindowPrivate(
     aProperties.source
   );
   download.source.windowRef = Cu.getWeakReference(aProperties.source);

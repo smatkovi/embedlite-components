@@ -33,10 +33,11 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
+const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/lazy.PrivateBrowsingUtils.sys.mjs");
 const { PromptUtils } = ChromeUtils.importESModule("resource://gre/modules/PromptUtils.sys.mjs");
 
 ChromeUtils.defineESModuleGetters(lazy, {
+  PrivateBrowsingUtils: "resource://gre/modules/lazy.PrivateBrowsingUtils.sys.mjs",
   LoginHelper: "resource://gre/modules/LoginHelper.sys.mjs",
 });
 
@@ -528,7 +529,7 @@ LoginManagerPrompter.prototype = {
   // Whether we are in private browsing mode
   get _inPrivateBrowsing() {
     if (this._chromeWindow) {
-      return PrivateBrowsingUtils.isContentWindowPrivate(this._chromeWindow);
+      return lazy.PrivateBrowsingUtils.isContentWindowPrivate(this._chromeWindow);
     }
     // If we don't that we're in private browsing mode if the caller did
     // not provide a window.  The callers which really care about this
@@ -879,7 +880,7 @@ LoginManagerPrompter.prototype = {
           !(aAuthInfo.flags & Ci.nsIAuthInformation.PREVIOUS_FAILED) &&
           Services.prefs.getBoolPref("signon.autologin.proxy") &&
           /* TODO: Check if this should be !this._inPrivateBrowsing */
-          !PrivateBrowsingUtils.permanentPrivateBrowsing
+          !lazy.PrivateBrowsingUtils.permanentPrivateBrowsing
         ) {
           this.log("Autologin enabled, skipping auth prompt.");
           canAutologin = true;
