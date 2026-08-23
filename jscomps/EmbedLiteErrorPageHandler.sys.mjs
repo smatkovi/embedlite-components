@@ -9,10 +9,9 @@ const Cr = Components.results;
 
 
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
-const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/lazy.PrivateBrowsingUtils.sys.mjs");
+const { PrivateBrowsingUtils } = ChromeUtils.importESModule("resource://gre/modules/PrivateBrowsingUtils.sys.mjs");
 
 ChromeUtils.defineESModuleGetters(lazy, {
-  PrivateBrowsingUtils: "resource://gre/modules/lazy.PrivateBrowsingUtils.sys.mjs",
   NetUtil: "resource://gre/modules/NetUtil.sys.mjs",
 });
 XPCOMUtils.defineLazyServiceGetter(Services, "embedlite",
@@ -160,7 +159,7 @@ var ErrorPageEventHandler = {
               flags |= overrideService.ERROR_TIME;
             }
             let temporary = (target == temp) ||
-                             lazy.PrivateBrowsingUtils.isWindowPrivate(errorDoc.defaultView);
+                             PrivateBrowsingUtils.isWindowPrivate(errorDoc.defaultView);
             let attrs = target.nodePrincipal.originAttributes;
             overrideService.rememberValidityOverride(uri.asciiHost, uri.port, attrs, cert, flags,
                                                      temporary);
