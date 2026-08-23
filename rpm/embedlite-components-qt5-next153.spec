@@ -1,7 +1,7 @@
 Name:       embedlite-components-qt5-next153
 Summary:    EmbedLite components Qt5
 Version:    2.0.0
-Release:    4
+Release:    5
 License:    MPLv2.0
 URL:        https://github.com/sailfishos/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
@@ -35,6 +35,10 @@ touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 %{_libdir}/mozembedlite-next153
 
 %changelog
+* Sun Aug 23 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-5
+- Form autocomplete uses searchLoginsAsync; findLogins was removed in ESR 153
+- HTTP auth dialogs no longer throw when looking for saved logins
+
 * Sun Aug 23 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-4
 - ContentLinkHandler: skip link elements whose document is already gone
 

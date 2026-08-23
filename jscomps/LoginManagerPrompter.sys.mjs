@@ -626,7 +626,10 @@ LoginManagerPrompter.prototype = {
       }
 
       // Look for existing logins.
-      foundLogins = Services.logins.findLogins(origin, null, realm);
+      // findLogins was removed in ESR 153 and searchLoginsAsync cannot be used
+      // from a synchronous nsIAuthPrompt method; the dialog is shown without
+      // a pre-filled user name.
+      foundLogins = [];
 
       // XXX Like the original code, we can't deal with multiple
       // account selection. (bug 227632)
@@ -753,7 +756,10 @@ LoginManagerPrompter.prototype = {
 
       if (!aPassword.value) {
         // Look for existing logins.
-        var foundLogins = Services.logins.findLogins(origin, null, realm);
+        // findLogins was removed in ESR 153 and searchLoginsAsync cannot be used
+        // from a synchronous nsIAuthPrompt method; the dialog is shown without
+        // a pre-filled user name.
+        var foundLogins = [];
 
         // XXX Like the original code, we can't deal with multiple
         // account selection (bug 227632). We can deal with finding the
