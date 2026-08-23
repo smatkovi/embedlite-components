@@ -183,7 +183,9 @@ EmbedHelper.prototype = {
         let sessionHistory = docShell.QueryInterface(Ci.nsIWebNavigation).sessionHistory;
         let legacyHistory;
         try {
-          legacyHistory = sessionHistory.legacySHistory;
+          // legacySHistory is gone in ESR 153; nsISHistory offers the same
+          // methods directly.
+          legacyHistory = sessionHistory.QueryInterface(Ci.nsISHistory);
         } catch (e) {
           Logger.warn("Warning: legacy session history is not available", e);
           break;
@@ -223,7 +225,7 @@ EmbedHelper.prototype = {
             let historyEntry = legacyHistory.createEntry();
             historyEntry.URI = uri;
             historyEntry.triggeringPrincipal = Services.scriptSecurityManager.getSystemPrincipal();
-            legacyHistory.addEntry(historyEntry, true);
+            legacyHistory.addEntry(historyEntry);
         });
         if (index < 0) {
             Logger.debug("Warning: session history entry index out of bounds:", index, " returning index 0.");
