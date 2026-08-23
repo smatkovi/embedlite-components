@@ -6,6 +6,7 @@ const lazy = {};
 // Search is an ES module in ESR 153; the lazy.SearchService XPCOM service is gone.
 ChromeUtils.defineESModuleGetters(lazy, {
   SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+  OpenSearchParser: "moz-src:///toolkit/components/search/OpenSearchParser.sys.mjs",
 });
 
 const Cc = Components.classes;
@@ -27,6 +28,36 @@ EmbedLiteSearchEngine.prototype = {
   classID: Components.ID("{924fe7ba-afa1-11e2-9d4f-533572064b73}"),
 
   _initSent: false,
+
+  async _addLocalEngine(aUri) {
+    let message = { "msg": "search-engine-added", "engine": "", "errorCode": 0 };
+    try {
+      let path = aUri.replace(/^file:\/\//, "");
+      let xml = await IOUtils.readUTF8(path);
+      let parsed = lazy.OpenSearchParser.parseXMLData(xml);
+      if ("error" in parsed) {
+        throw new Error(parsed.error);
+      }
+      let searchUrl = parsed.data.urls.find(u => u.type == "text/html");
+      if (!searchUrl) {
+        throw new Error("no text/html search url");
+      }
+      let url = searchUrl.template;
+      if (searchUrl.params && searchUrl.params.length) {
+        let query = searchUrl.params.map(p => p.name + "=" + p.value).join("&");
+        url += (url.includes("?") ? "&" : "?") + query;
+      }
+      let engine = await lazy.SearchService.addUserEngine({
+        name: parsed.data.shortName,
+        url,
+      });
+      message.engine = (engine && engine.name) || "";
+    } catch (e) {
+      Logger.warn("EmbedLiteSearchEngine: local engine " + aUri + " failed: " + e);
+      message.errorCode = Cr.NS_ERROR_FAILURE;
+    }
+    Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
+  },
 
   _notifyInit: function AC_notifyInit(force) {
     if (this._initSent && !force) {
@@ -87,6 +118,13 @@ EmbedLiteSearchEngine.prototype = {
             // deliver on the main thread: the OpenSearch load would otherwise
             // never complete and the promise would stay pending forever.
             Services.tm.dispatchToMainThread(() => {
+            // Bundled engines live on disk. The OpenSearch loader fetches them
+            // through a necko channel, which never completes in this embedding;
+            // read and parse them directly instead.
+            if (data.uri.startsWith("file://")) {
+              this._addLocalEngine(data.uri);
+              return;
+            }
             lazy.SearchService.addOpenSearchEngine(data.uri, null).then(
               engine => {
                 var message = {
