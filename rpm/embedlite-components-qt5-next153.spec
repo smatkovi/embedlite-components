@@ -1,7 +1,7 @@
 Name:       embedlite-components-qt5-next153
 Summary:    EmbedLite components Qt5
 Version:    2.0.0
-Release:    1
+Release:    2
 License:    MPLv2.0
 URL:        https://github.com/sailfishos/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
@@ -33,3 +33,10 @@ touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 %files
 %license COPYING
 %{_libdir}/mozembedlite-next153
+
+%changelog
+* Sun Aug 23 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-2
+- Register the bundled search engines from disk and port the search service to the ES module
+- Use nsISHistory directly; legacySHistory was removed in ESR 153
+- Resolve the view id for nodes, documents and windows alike (focus targets inside iframes)
+- Add the system alerts service so web notifications reach the embedder
