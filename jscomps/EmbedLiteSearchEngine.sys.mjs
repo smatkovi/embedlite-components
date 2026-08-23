@@ -33,7 +33,7 @@ EmbedLiteSearchEngine.prototype = {
     let message = { "msg": "search-engine-added", "engine": "", "errorCode": 0 };
     try {
       let path = aUri.replace(/^file:\/\//, "");
-      let xml = await IOUtils.readUTF8(path);
+      let xml = await IOUtils.read(path);
       let parsed = lazy.OpenSearchParser.parseXMLData(xml);
       if ("error" in parsed) {
         throw new Error(parsed.error);
