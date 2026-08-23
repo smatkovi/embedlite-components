@@ -1,8 +1,7 @@
 Name:       embedlite-components-qt5-next153
 Summary:    EmbedLite components Qt5
 Version:    2.0.0
-Release:    2
-License:    MPLv2.0
+Release:    3License:    MPLv2.0
 URL:        https://github.com/sailfishos/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
 
@@ -35,6 +34,10 @@ touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 %{_libdir}/mozembedlite-next153
 
 %changelog
+* Sun Aug 23 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-3
+- Lazy getter for PrivateBrowsingUtils in the permission prompt, so the notification permission dialog appears
+- Session history: sessionHistory already implements nsISHistory
+
 * Sun Aug 23 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-2
 - Register the bundled search engines from disk and port the search service to the ES module
 - Use nsISHistory directly; legacySHistory was removed in ESR 153
