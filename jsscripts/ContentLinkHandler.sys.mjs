@@ -295,9 +295,10 @@ export var ContentLinkHandler = {
     if (!link || !link.ownerDocument || !rel || !link.href)
       return;
 
-    // Ignore sub-frames (bugs 305472, 479408).
+    // Ignore sub-frames (bugs 305472, 479408). ownerGlobal is undefined for
+    // nodes whose document is already gone.
     let window = link.ownerGlobal;
-    if (window != window.top)
+    if (!window || window != window.top)
       return;
 
     // Note: following booleans only work for the current link, not for the
