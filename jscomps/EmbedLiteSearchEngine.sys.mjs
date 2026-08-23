@@ -83,6 +83,10 @@ EmbedLiteSearchEngine.prototype = {
             break;
           }
           case "loadxml": {
+            // Observers fire on EmbedLiteSubThread, but necko channels only
+            // deliver on the main thread: the OpenSearch load would otherwise
+            // never complete and the promise would stay pending forever.
+            Services.tm.dispatchToMainThread(() => {
             lazy.SearchService.addOpenSearchEngine(data.uri, null).then(
               engine => {
                 var message = {
@@ -103,6 +107,7 @@ EmbedLiteSearchEngine.prototype = {
                 Services.obs.notifyObservers(null, "embed:search", JSON.stringify(message));
               }
             );
+            });
             break;
           }
           case "setdefault": {
