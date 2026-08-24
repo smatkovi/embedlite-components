@@ -220,6 +220,10 @@ EmbedLiteChromeManager.prototype = {
     this._lastCreatedWindowId = chromeListener.windowId;
     let chromeEventHandler = Services.embedlite.chromeEventHandler(aWindow);
     if (chromeEventHandler) {
+      // Den Handler am Listener festhalten: beim Schliessen liefert
+      // chromeEventHandler(aWindow) auf langsameren Geraeten schon nichts mehr,
+      // die Listener blieben dann bis zur Zerstoerung des Fensters registriert.
+      chromeListener.chromeEventHandler = chromeEventHandler;
       chromeEventHandler.addEventListener("DOMContentLoaded", chromeListener, false);
       chromeEventHandler.addEventListener("DOMWillOpenModalDialog", chromeListener, false);
       chromeEventHandler.addEventListener("DOMModalDialogClosed", chromeListener, false);
@@ -232,9 +236,11 @@ EmbedLiteChromeManager.prototype = {
   },
 
   onWindowClosed(aWindow) {
-    let chromeEventHandler = Services.embedlite.chromeEventHandler(aWindow);
     let windowId = Services.embedlite.getIDByWindow(aWindow);
     let chromeListener = this._chromeListeners[windowId];
+    // Der gemerkte Handler zuerst - siehe onWindowCreated
+    let chromeEventHandler = (chromeListener && chromeListener.chromeEventHandler)
+                             || Services.embedlite.chromeEventHandler(aWindow);
     if (chromeEventHandler && chromeListener) {
       chromeEventHandler.removeEventListener("DOMContentLoaded", chromeListener, false);
       chromeEventHandler.removeEventListener("DOMWillOpenModalDialog", chromeListener, false);
@@ -244,6 +250,9 @@ EmbedLiteChromeManager.prototype = {
       chromeEventHandler.removeEventListener("DOMPopupBlocked", chromeListener, false);
     } else {
       Logger.warn("Something went wrong, could not get chrome event handler/listener for window", aWindow, "id:", windowId, "when closing a window")
+    }
+    if (chromeListener) {
+      chromeListener.chromeEventHandler = null;
     }
     if (this._lastCreatedWindowId === windowId) {
       this._lastCreatedWindowId = 0;
