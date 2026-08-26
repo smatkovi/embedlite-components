@@ -1,0 +1,9 @@
+{
+  "browserAction": {
+    "url": "resource://embedlite-components/ext-browserAction.js",
+    "schema": "chrome://extensions/content/schemas/browser_action.json",
+    "scopes": ["addon_parent"],
+    "manifest": ["browser_action", "action"],
+    "paths": [["browserAction"], ["action"]]
+  }
+}

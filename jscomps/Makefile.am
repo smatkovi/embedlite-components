@@ -11,6 +11,9 @@ jscomps_manifest_DATA = \
 	EmbedLiteGlobalHelper.sys.mjs \
 	EmbedLiteConsoleListener.sys.mjs \
 	EmbedLiteDevTools.sys.mjs \
+	EmbedLiteAddons.sys.mjs \
+	extensions/ext-browserAction.js \
+	extensions/ext-embedlite.json \
 	EmbedLiteAlertsService.sys.mjs \
 	EmbedLiteChromeManager.sys.mjs \
 	EmbedLiteOrientationChangeHandler.sys.mjs \

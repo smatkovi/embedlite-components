@@ -223,6 +223,7 @@ EmbedLiteChromeManager.prototype = {
       // Den Handler am Listener festhalten: beim Schliessen liefert
       // chromeEventHandler(aWindow) auf langsameren Geraeten schon nichts mehr,
       // die Listener blieben dann bis zur Zerstoerung des Fensters registriert.
+      chromeListener.window = aWindow;
       chromeListener.chromeEventHandler = chromeEventHandler;
       chromeEventHandler.addEventListener("DOMContentLoaded", chromeListener, false);
       chromeEventHandler.addEventListener("DOMWillOpenModalDialog", chromeListener, false);
@@ -238,6 +239,18 @@ EmbedLiteChromeManager.prototype = {
   onWindowClosed(aWindow) {
     let windowId = Services.embedlite.getIDByWindow(aWindow);
     let chromeListener = this._chromeListeners[windowId];
+    if (!chromeListener) {
+      // getIDByWindow liefert beim Schliessen 0, sobald das Fenster zu weit
+      // abgebaut ist - dann ueber das gemerkte Fenster suchen, sonst bleiben
+      // die Listener registriert und der Prozess stirbt beim Beenden.
+      for (let id in this._chromeListeners) {
+        if (this._chromeListeners[id].window === aWindow) {
+          chromeListener = this._chromeListeners[id];
+          windowId = chromeListener.windowId;
+          break;
+        }
+      }
+    }
     // Der gemerkte Handler zuerst - siehe onWindowCreated
     let chromeEventHandler = (chromeListener && chromeListener.chromeEventHandler)
                              || Services.embedlite.chromeEventHandler(aWindow);
@@ -253,6 +266,7 @@ EmbedLiteChromeManager.prototype = {
     }
     if (chromeListener) {
       chromeListener.chromeEventHandler = null;
+      chromeListener.window = null;
     }
     if (this._lastCreatedWindowId === windowId) {
       this._lastCreatedWindowId = 0;
