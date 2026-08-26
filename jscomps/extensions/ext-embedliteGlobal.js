@@ -73,7 +73,11 @@ function currentContentWindow() {
     const w = e.getNext();
     try {
       const bc = w.docShell && w.docShell.browsingContext;
-      if (bc && bc.isContent && !bc.parent) {
+      // about:blank and the windowless browser used for background pages both
+      // pass the isContent check, so pick the one actually showing a page.
+      const href = String(w.location.href);
+      if (bc && bc.isContent && !bc.parent &&
+          (href.startsWith("http") || href.startsWith("file"))) {
         found = w;
       }
     } catch (ex) {}

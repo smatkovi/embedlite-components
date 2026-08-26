@@ -11,6 +11,21 @@
 // events never fire, so per-tab logic stays inert, but webRequest filtering
 // works regardless.
 
+// ext-tabs-base.js checks `details.code === null` against `details.file === null`,
+// which the schema layer normally guarantees. Called directly, undefined fails
+// that check, so fill the whole shape in.
+function normalise(details) {
+  return {
+    code: details.code ?? null,
+    file: details.file ?? null,
+    frameId: details.frameId ?? null,
+    allFrames: details.allFrames ?? false,
+    matchAboutBlank: details.matchAboutBlank ?? false,
+    runAt: details.runAt ?? "document_idle",
+    cssOrigin: details.cssOrigin ?? "author",
+  };
+}
+
 function emptyEvent(context, name) {
   return new ExtensionCommon.EventManager({
     context, name, register: () => () => {},
@@ -30,24 +45,27 @@ this.tabs = class extends ExtensionAPI {
         reload: () => Promise.resolve(),
         sendMessage: fail,
 
-        // These do real work. ext-tabs-base.js handles the injection once it
-        // has a Tab wrapper, and ext-embedliteGlobal.js provides one. Cookie
-        // banner blockers and userscript managers inject this way.
+        // ext-tabs-base.js does the injection through the ExtensionContent
+        // actor; ext-embedliteGlobal.js supplies the Tab wrapper it needs.
+        // The schema layer normally fills these in, so normalise them here.
         query: () => {
           const tab = context.extension.tabManager.get(1);
           return Promise.resolve(tab ? [tab.convert()] : []);
         },
         insertCSS: (tabId, details) => {
           const tab = context.extension.tabManager.get(tabId);
-          return tab ? tab.insertCSS(context, details) : Promise.resolve();
+          return tab ? tab.insertCSS(context, normalise(details))
+                     : Promise.resolve();
         },
         removeCSS: (tabId, details) => {
           const tab = context.extension.tabManager.get(tabId);
-          return tab ? tab.removeCSS(context, details) : Promise.resolve();
+          return tab ? tab.removeCSS(context, normalise(details))
+                     : Promise.resolve();
         },
         executeScript: (tabId, details) => {
           const tab = context.extension.tabManager.get(tabId);
-          return tab ? tab.executeScript(context, details) : Promise.resolve([]);
+          return tab ? tab.executeScript(context, normalise(details))
+                     : Promise.resolve([]);
         },
         onCreated: emptyEvent(context, "tabs.onCreated"),
         onUpdated: emptyEvent(context, "tabs.onUpdated"),
