@@ -40,6 +40,33 @@ $EmbedLiteAddonsHandler.prototype = {
                                  JSON.stringify({ msg: "list", addons: list }));
   },
 
+  async _search(query) {
+    // addons.mozilla.org has a public search API; the UI shows the results and
+    // hands back a download URL to installFromURL.
+    const url = "https://addons.mozilla.org/api/v5/addons/search/" +
+                "?q=" + encodeURIComponent(query) +
+                "&app=firefox&type=extension&page_size=20";
+    try {
+      const res = await fetch(url);
+      const json = await res.json();
+      const list = (json.results || []).map(r => ({
+        id: r.guid,
+        name: typeof r.name === "string" ? r.name : (r.name && (r.name["en-US"] || Object.values(r.name)[0])) || r.slug,
+        summary: typeof r.summary === "string" ? r.summary : (r.summary && (r.summary["en-US"] || Object.values(r.summary)[0])) || "",
+        iconURL: r.icon_url || "",
+        users: r.average_daily_users || 0,
+        rating: (r.ratings && r.ratings.average) || 0,
+        url: (r.current_version && r.current_version.file && r.current_version.file.url) || "",
+      })).filter(r => r.url);
+      Services.obs.notifyObservers(null, "embed:addons",
+        JSON.stringify({ msg: "searchResults", addons: list }));
+    } catch (e) {
+      Logger.warn("addon search failed: " + e);
+      Services.obs.notifyObservers(null, "embed:addons",
+        JSON.stringify({ msg: "searchResults", addons: [], error: String(e) }));
+    }
+  },
+
   observe(aSubject, aTopic, aData) {
     if (aTopic !== "embedui:addons") {
       return;
@@ -69,6 +96,26 @@ $EmbedLiteAddonsHandler.prototype = {
         AddonManager.getAddonByID(data.id).then(a => {
           if (a) a.uninstall();
         }).then(() => this._send());
+        break;
+      case "search":
+        this._search(data.query);
+        break;
+      case "installFromURL":
+        AddonManager.getInstallForURL(data.url).then(install => {
+          install.addListener({
+            onInstallEnded: () => this._send(),
+            onInstallFailed: () => {
+              Services.obs.notifyObservers(null, "embed:addons",
+                JSON.stringify({ msg: "installFailed", url: data.url }));
+              this._send();
+            },
+          });
+          install.install();
+        }, e => {
+          Logger.warn("getInstallForURL failed: " + e);
+          Services.obs.notifyObservers(null, "embed:addons",
+            JSON.stringify({ msg: "installFailed", url: data.url }));
+        });
         break;
       case "installFromFile":
         AddonManager.getInstallForFile(

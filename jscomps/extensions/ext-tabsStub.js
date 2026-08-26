@@ -22,12 +22,33 @@ this.tabs = class extends ExtensionAPI {
     const fail = () => Promise.reject(new Error("tabs API is not available"));
     return {
       tabs: {
-        get: fail, getCurrent: () => Promise.resolve(undefined),
-        query: () => Promise.resolve([]), create: fail, update: fail,
-        remove: () => Promise.resolve(), reload: () => Promise.resolve(),
-        sendMessage: fail, insertCSS: () => Promise.resolve(),
-        removeCSS: () => Promise.resolve(),
-        executeScript: () => Promise.resolve([]),
+        get: fail,
+        getCurrent: () => Promise.resolve(undefined),
+        create: fail,
+        update: fail,
+        remove: () => Promise.resolve(),
+        reload: () => Promise.resolve(),
+        sendMessage: fail,
+
+        // These do real work. ext-tabs-base.js handles the injection once it
+        // has a Tab wrapper, and ext-embedliteGlobal.js provides one. Cookie
+        // banner blockers and userscript managers inject this way.
+        query: () => {
+          const tab = context.extension.tabManager.get(1);
+          return Promise.resolve(tab ? [tab.convert()] : []);
+        },
+        insertCSS: (tabId, details) => {
+          const tab = context.extension.tabManager.get(tabId);
+          return tab ? tab.insertCSS(context, details) : Promise.resolve();
+        },
+        removeCSS: (tabId, details) => {
+          const tab = context.extension.tabManager.get(tabId);
+          return tab ? tab.removeCSS(context, details) : Promise.resolve();
+        },
+        executeScript: (tabId, details) => {
+          const tab = context.extension.tabManager.get(tabId);
+          return tab ? tab.executeScript(context, details) : Promise.resolve([]);
+        },
         onCreated: emptyEvent(context, "tabs.onCreated"),
         onUpdated: emptyEvent(context, "tabs.onUpdated"),
         onRemoved: emptyEvent(context, "tabs.onRemoved"),
