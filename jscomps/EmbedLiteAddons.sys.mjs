@@ -25,6 +25,13 @@ export function $EmbedLiteAddons() {
       "webextension-modules", "embedlite",
       "resource://embedlite-components/ext-embedlite.json", false, true);
 
+    // Parent-side globals. ExtensionParent calls global.tabTracker.getBrowserData
+    // for every extension page; without it, extension pages load with no browser
+    // object at all. Firefox and Android register this the same way.
+    Services.catMan.addCategoryEntry(
+      "webextension-scripts", "embedlite",
+      "resource://embedlite-components/ext-embedliteGlobal.js", false, true);
+
 
   try {
     const { AddonManager } = ChromeUtils.importESModule(
@@ -57,6 +64,29 @@ export function $EmbedLiteAddons() {
       "resource://gre/modules/AddonManager.sys.mjs");
     AddonManagerPrivate.startup();
     Logger.warn("AddonManager started, isReady=" + AddonManager.isReady);
+
+    // Extension pages (options, popups, the uBlock dashboard) get their browser
+    // object from ExtensionProcessScript.initExtensionDocument. Firefox calls it
+    // from the ExtensionContent actor; EmbedLite never does, so those pages load
+    // with no WebExtension API at all. Watch for extension documents instead.
+    const { ExtensionProcessScript } = ChromeUtils.importESModule(
+      "resource://gre/modules/ExtensionProcessScript.sys.mjs");
+    Services.obs.addObserver({
+      observe(win) {
+        try {
+          const uri = win.document.documentURIObject;
+          if (!uri || uri.scheme !== "moz-extension") {
+            return;
+          }
+          const policy = WebExtensionPolicy.getByHostname(uri.host);
+          if (policy) {
+            ExtensionProcessScript.initExtensionDocument(policy, win.document, false);
+          }
+        } catch (e) {
+          Logger.warn("initExtensionDocument failed: " + e);
+        }
+      },
+    }, "content-document-global-created", false);
     Logger.warn("AddonManager started");
   } catch (e) {
     Logger.warn("AddonManager failed to start: " + e);

@@ -34,6 +34,7 @@ $EmbedLiteAddonsHandler.prototype = {
         enabled: !a.userDisabled,
         active: a.isActive,
         iconURL: a.iconURL || "",
+        optionsURL: a.optionsURL || "",
       }));
     Services.obs.notifyObservers(null, "embed:addons",
                                  JSON.stringify({ msg: "list", addons: list }));
