@@ -17,6 +17,15 @@ export function $EmbedLiteAddons() {
     return;
   }
 
+    // browserAction lives in browser/components, which EmbedLite does not build,
+    // so extensions that call it during startup abort before their background
+    // page finishes loading. Register a stub the same way Firefox for Android
+    // does: through the webextension-modules category, parent scope only.
+    Services.catMan.addCategoryEntry(
+      "webextension-modules", "embedlite",
+      "resource://embedlite-components/ext-embedlite.json", false, true);
+
+
   try {
     const { AddonManager } = ChromeUtils.importESModule(
       "resource://gre/modules/AddonManager.sys.mjs");
@@ -38,15 +47,6 @@ export function $EmbedLiteAddons() {
     // browserAction lives in browser/components/extensions, which EmbedLite
     // does not build, so extensions that touch it during startup never finish
     // loading their background page. Register a stub that accepts the calls.
-    ExtensionParent.apiManager.registerModules({
-      browserAction: {
-        url: "resource://embedlite-components/ext-browserAction.js",
-        schema: "chrome://extensions/content/schemas/browser_action.json",
-        scopes: ["addon_parent"],
-        manifest: ["browser_action", "action"],
-        paths: [["browserAction"], ["action"]],
-      },
-    });
     Services.obs.notifyObservers(null, "browser-delayed-startup-finished");
     // browserStartupPromise races sessionstore-windows-restored against
     // extensions-late-startup. EmbedLite has no SessionStore, so the latter is

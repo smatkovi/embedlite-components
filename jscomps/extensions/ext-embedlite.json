@@ -2,8 +2,32 @@
   "browserAction": {
     "url": "resource://embedlite-components/ext-browserAction.js",
     "schema": "chrome://extensions/content/schemas/browser_action.json",
-    "scopes": ["addon_parent"],
-    "manifest": ["browser_action", "action"],
-    "paths": [["browserAction"], ["action"]]
+    "scopes": [
+      "addon_parent"
+    ],
+    "manifest": [
+      "browser_action",
+      "action"
+    ],
+    "paths": [
+      [
+        "browserAction"
+      ],
+      [
+        "action"
+      ]
+    ]
+  },
+  "tabs": {
+    "url": "resource://embedlite-components/ext-tabsStub.js",
+    "schema": "resource://embedlite-components/tabs.json",
+    "scopes": [
+      "addon_parent"
+    ],
+    "paths": [
+      [
+        "tabs"
+      ]
+    ]
   }
 }

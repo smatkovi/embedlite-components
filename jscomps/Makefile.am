@@ -13,6 +13,10 @@ jscomps_manifest_DATA = \
 	EmbedLiteDevTools.sys.mjs \
 	EmbedLiteAddons.sys.mjs \
 	extensions/ext-browserAction.js \
+	extensions/ext-tabsStub.js \
+	schemas/tabs.json \
+	extensions/ext-browserActionChild.js \
+	extensions/ext-embedliteChild.js \
 	extensions/ext-embedlite.json \
 	EmbedLiteAlertsService.sys.mjs \
 	EmbedLiteChromeManager.sys.mjs \
