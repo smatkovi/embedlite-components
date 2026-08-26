@@ -1,7 +1,7 @@
 Name:       embedlite-components-qt5-next153
 Summary:    EmbedLite components Qt5
 Version:    2.0.0
-Release:    6
+Release:    8
 License:    MPLv2.0
 URL:        https://github.com/sailfishos/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
@@ -27,14 +27,33 @@ NO_CONFIGURE=yes ./autogen.sh
 %install
 %make_install
 
+mkdir -p %{buildroot}%{_prefix}/lib/udev/rules.d
+install -m 644 data/70-fido-token.rules \
+    %{buildroot}%{_prefix}/lib/udev/rules.d/70-fido-token.rules
+
 %post
+udevadm control --reload-rules >/dev/null 2>&1 || :
+udevadm trigger --subsystem-match=hidraw >/dev/null 2>&1 || :
 touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 
 %files
+%{_prefix}/lib/udev/rules.d/70-fido-token.rules
 %license COPYING
 %{_libdir}/mozembedlite-next153
 
 %changelog
+* Wed Aug 26 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-8
+- Ship a udev rule for FIDO/U2F security keys. The hidraw node is root-only on
+  some ports, so WebAuthn worked on the Xperia 10 V and failed elsewhere.
+- Add EmbedLiteAddonsHandler, which answers embedui:addons from the browser UI
+  with the installed add-on list and handles enable, disable and uninstall.
+
+* Wed Aug 26 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-7
+- Add EmbedLiteDevTools, started from the embedlite-startup category: EmbedLite
+  runs no startup JavaScript, so the DevTools server in omni.ja was never
+  reachable. Behind embedlite.devtools.enabled, port from embedlite.devtools.port.
+- Add EmbedLiteAddons the same way, behind embedlite.addons.enabled
+
 * Mon Aug 24 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-6
 - Remember the chrome event handler on the listener instead of asking for it
   again when the window closes: on slower devices it is already gone by then,

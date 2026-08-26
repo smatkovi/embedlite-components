@@ -1,0 +1,8 @@
+# FIDO/U2F security keys speak CTAP over hidraw, and the browser runs as an
+# ordinary user. Without this the node is root-only on some ports and WebAuthn
+# fails with no visible error.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1050", GROUP="users", MODE="0660"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0483", GROUP="users", MODE="0660"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="20a0", GROUP="users", MODE="0660"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="096e", GROUP="users", MODE="0660"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="2581", GROUP="users", MODE="0660"

@@ -12,6 +12,7 @@ jscomps_manifest_DATA = \
 	EmbedLiteConsoleListener.sys.mjs \
 	EmbedLiteDevTools.sys.mjs \
 	EmbedLiteAddons.sys.mjs \
+	EmbedLiteAddonsHandler.sys.mjs \
 	extensions/ext-browserAction.js \
 	extensions/ext-tabsStub.js \
 	schemas/tabs.json \
