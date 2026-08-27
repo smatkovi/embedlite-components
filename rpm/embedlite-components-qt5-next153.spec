@@ -1,7 +1,7 @@
 Name:       embedlite-components-qt5-next153
 Summary:    EmbedLite components Qt5
 Version:    2.0.0
-Release:    8
+Release:    9
 License:    MPLv2.0
 URL:        https://github.com/sailfishos/embedlite-components
 Source0:    %{name}-%{version}.tar.bz2
@@ -42,6 +42,22 @@ touch /var/lib/_MOZEMBED_CACHE_CLEAN_
 %{_libdir}/mozembedlite-next153
 
 %changelog
+* Thu Aug 27 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-9
+- Rebuild the extension bindings on the toolkit base classes, following
+  Firefox for Android: real TabTracker, TabBase, TabManager, Window and
+  WindowManager subclasses in place of hand-written stubs. Tab ids are handed
+  out per content window instead of being fixed at 1.
+- Add a browsingContext getter to the tab wrapper, so frameId and allFrames
+  resolve against the page rather than the stand-in embedder element. Cookie
+  banners live in subframes and were never reached before.
+- Honour Chrome-style callbacks in tabs.query, get, insertCSS, removeCSS and
+  executeScript. Extensions written for Chrome wait for the callback rather
+  than the promise, and the schema layer that normally translates is bypassed
+  by these hand-written entry points, so callers waited forever.
+- Force author-origin sheets in insertCSS: user sheets are accepted by
+  addSheet but never take effect here, so cookie blockers asking for "user"
+  silently did nothing.
+
 * Wed Aug 26 2026 Sebastian Matkovich <sebastianmatkovich@gmail.com> - 2.0.0-8
 - Ship a udev rule for FIDO/U2F security keys. The hidraw node is root-only on
   some ports, so WebAuthn worked on the Xperia 10 V and failed elsewhere.
