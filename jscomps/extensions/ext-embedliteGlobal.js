@@ -29,7 +29,10 @@ const tabTracker = {
     return currentContentWindow();
   },
   getBrowserData(browser) {
-    if (!browser || !browser.documentGlobal) {
+    // Since content windows carry an embedder element, browser is a XUL
+    // <browser> here, which has no documentGlobal. ext-webNavigation drops the
+    // event when tabId comes back negative, so only reject a missing browser.
+    if (!browser) {
       return { tabId: -1, windowId: -1 };
     }
     return { tabId: EMBEDLITE_TAB_ID, windowId: EMBEDLITE_WINDOW_ID };
