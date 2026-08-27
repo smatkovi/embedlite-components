@@ -61,6 +61,57 @@ const windowTracker = {
 // given tab id. EmbedLite has one content window at a time, so the wrapper just
 // points at it.
 
+// Gecko reads BrowsingContext::Top()->GetEmbedderElement() in WebNavigation.fire,
+// the tabs API and browserAction, and gives up when it is null. EmbedLite renders
+// into a Qt window rather than a XUL <browser>, so it never has one. Keep a single
+// hidden document around and hand out a <browser> element per content window.
+
+let sharedBrowserDoc = null;
+
+function ensureSharedDoc() {
+  if (sharedBrowserDoc && sharedBrowserDoc.defaultView) {
+    return sharedBrowserDoc;
+  }
+  const wlb = Services.appShell.createWindowlessBrowser(true);
+  const nav = wlb.docShell.QueryInterface(Ci.nsIWebNavigation);
+  nav.loadURI(Services.io.newURI("chrome://extensions/content/dummy.xhtml"), {
+    triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
+  });
+  sharedBrowserDoc = wlb.document;
+  return sharedBrowserDoc;
+}
+
+function ensureEmbedderElement(win) {
+  try {
+    const bc = win.docShell && win.docShell.browsingContext;
+    if (!bc || bc.top.embedderElement) {
+      return;
+    }
+    const doc = ensureSharedDoc();
+    if (!doc || !doc.documentElement) {
+      return;
+    }
+    const br = doc.createXULElement("browser");
+    br.setAttribute("type", "content");
+    br.setAttribute("remote", "false");
+    doc.documentElement.appendChild(br);
+    win.windowUtils.setEmbedderElement(br);
+  } catch (e) {}
+}
+
+// Only worth doing when something actually uses it.
+Services.obs.addObserver({
+  observe(subject) {
+    try {
+      const win = subject;
+      const bc = win.docShell && win.docShell.browsingContext;
+      if (bc && bc.isContent && !bc.parent) {
+        ensureEmbedderElement(win);
+      }
+    } catch (e) {}
+  },
+}, "content-document-global-created", false);
+
 // tabs.insertCSS and tabs.executeScript run through TabBase in ext-tabs-base.js,
 // which toolkit already registers as b-tabs-base in this same category. It only
 // needs a wrapper that can name a browser for a tab id - and EmbedLite shows one
