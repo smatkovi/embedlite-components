@@ -62,6 +62,18 @@ export function $EmbedLiteAddons() {
 
     const { AddonManagerPrivate } = ChromeUtils.importESModule(
       "resource://gre/modules/AddonManager.sys.mjs");
+    // The parent half of an API module is only loaded when something in the
+    // parent process asks for it. storage never gets that trigger here, so the
+    // child half sends requests nobody answers, and extensions that read their
+    // settings at startup wait forever.
+    for (const name of ["storage", "runtime", "tabs", "webNavigation"]) {
+      try {
+        ExtensionParent.apiManager.loadModule(name);
+      } catch (e) {
+        Logger.warn("preloading " + name + " failed: " + e);
+      }
+    }
+
     AddonManagerPrivate.startup();
     Logger.warn("AddonManager started, isReady=" + AddonManager.isReady);
 

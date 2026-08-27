@@ -1,231 +1,655 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/.
- */
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
-/* global global, ExtensionCommon */
+/**
+ * Extension support for EmbedLite, modelled on mobile/shared/components/
+ * extensions/ext-android.js.
+ *
+ * The one structural difference: on Android every tab is its own chrome
+ * window, so `browser.ownerGlobal.tab` identifies a tab. EmbedLite has a
+ * single window and the browser UI owns the tab list outside of Gecko, so we
+ * key tabs off the content window itself and hand each one an embedder
+ * element out of a shared hidden document.
+ */
 
-// ExtensionParent's GetFrameData handler calls global.tabTracker.getBrowserData
-// on every extension page load. Firefox sets that up in browser/components and
-// Android in mobile/shared; EmbedLite builds neither, so extension pages come up
-// without a browser object at all - the uBlock dashboard renders empty.
-//
-// EmbedLite has a single window and manages tabs in the browser UI rather than
-// in Gecko, so a fixed identity is enough to let the frame data through.
+ChromeUtils.defineESModuleGetters(this, {
+  PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.sys.mjs",
+});
 
+var { ExtensionCommon } = ChromeUtils.importESModule(
+  "resource://gre/modules/ExtensionCommon.sys.mjs"
+);
+var { ExtensionUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/ExtensionUtils.sys.mjs"
+);
+var { EventEmitter } = ExtensionCommon;
+var { DefaultWeakMap, ExtensionError } = ExtensionUtils;
+
+const BrowserStatusFilter = Components.Constructor(
+  "@mozilla.org/appshell/component/browser-status-filter;1",
+  "nsIWebProgress",
+  "addProgressListener"
+);
+
+const PROGRESS_LISTENER_FLAGS =
+  Ci.nsIWebProgress.NOTIFY_STATE_ALL | Ci.nsIWebProgress.NOTIFY_LOCATION;
+
+// EmbedLite has one window; tab ids are handed out per content window.
 const EMBEDLITE_WINDOW_ID = 1;
-const EMBEDLITE_TAB_ID = 1;
 
-const tabTracker = {
-  getId() {
-    return EMBEDLITE_TAB_ID;
-  },
-  getTab(id, default_ = undefined) {
-    return currentContentWindow() || default_;
-  },
-  get activeTab() {
-    return currentContentWindow();
-  },
-  getBrowserData(browser) {
-    // Since content windows carry an embedder element, browser is a XUL
-    // <browser> here, which has no documentGlobal. ext-webNavigation drops the
-    // event when tabId comes back negative, so only reject a missing browser.
-    if (!browser) {
-      return { tabId: -1, windowId: -1 };
-    }
-    return { tabId: EMBEDLITE_TAB_ID, windowId: EMBEDLITE_WINDOW_ID };
-  },
-  on() {},
-  off() {},
-  init() {},
-};
+// ---------------------------------------------------------------------------
+// Embedder elements
+//
+// Content windows in EmbedLite have no embedder element of their own, but
+// webNavigation, tabs and browserAction all reach for bc.top.embedderElement.
+// We keep one hidden windowless document and park a <browser> in it per tab.
+// ---------------------------------------------------------------------------
 
-const windowTracker = {
-  get topWindow() {
-    return null;
-  },
-  getId() {
-    return EMBEDLITE_WINDOW_ID;
-  },
-  getWindow() {
-    return null;
-  },
-  addOpenListener() {},
-  addCloseListener() {},
-  on() {},
-  off() {},
-  init() {},
-};
-
-// tabs.insertCSS and tabs.executeScript go through TabBase in ext-tabs-base.js,
-// which ships in toolkit. It needs a Tab wrapper that can name a browser for a
-// given tab id. EmbedLite has one content window at a time, so the wrapper just
-// points at it.
-
-// Gecko reads BrowsingContext::Top()->GetEmbedderElement() in WebNavigation.fire,
-// the tabs API and browserAction, and gives up when it is null. EmbedLite renders
-// into a Qt window rather than a XUL <browser>, so it never has one. Keep a single
-// hidden document around and hand out a <browser> element per content window.
-
-let sharedBrowserDoc = null;
+let sharedDoc = null;
+let sharedBrowser = null;
 
 function ensureSharedDoc() {
-  if (sharedBrowserDoc && sharedBrowserDoc.defaultView) {
-    return sharedBrowserDoc;
+  if (sharedDoc) {
+    return sharedDoc;
   }
-  const wlb = Services.appShell.createWindowlessBrowser(true);
-  const nav = wlb.docShell.QueryInterface(Ci.nsIWebNavigation);
+  sharedBrowser = Services.appShell.createWindowlessBrowser(true);
+  const shell = sharedBrowser.docShell;
+  const nav = shell.QueryInterface(Ci.nsIWebNavigation);
   nav.loadURI(Services.io.newURI("chrome://extensions/content/dummy.xhtml"), {
     triggeringPrincipal: Services.scriptSecurityManager.getSystemPrincipal(),
   });
-  sharedBrowserDoc = wlb.document;
-  return sharedBrowserDoc;
+  sharedDoc = sharedBrowser.document;
+  return sharedDoc;
 }
 
 function ensureEmbedderElement(win) {
-  try {
-    const bc = win.docShell && win.docShell.browsingContext;
-    if (!bc || bc.top.embedderElement) {
-      return;
-    }
-    const doc = ensureSharedDoc();
-    if (!doc || !doc.documentElement) {
-      return;
-    }
-    const br = doc.createXULElement("browser");
-    br.setAttribute("type", "content");
-    br.setAttribute("remote", "false");
-    doc.documentElement.appendChild(br);
-    win.windowUtils.setEmbedderElement(br);
-    // SetEmbedderElement also writes EmbedderElementType and clears the message
-    // manager group, which ExtensionPolicyService checks before running content
-    // scripts. Put it back.
-    bc.top.messageManagerGroup = "browsers";
-  } catch (e) {}
+  const bc = win.docShell?.browsingContext?.top;
+  if (!bc) {
+    return null;
+  }
+  if (bc.embedderElement) {
+    return bc.embedderElement;
+  }
+
+  const doc = ensureSharedDoc();
+  if (!doc || doc.readyState !== "complete") {
+    return null;
+  }
+
+  const el = doc.createXULElement("browser");
+  el.setAttribute("type", "content");
+  el.setAttribute("remote", "false");
+  doc.documentElement.appendChild(el);
+
+  win.windowUtils.setEmbedderElement(el);
+  // setEmbedderElement clears EmbedderElementType, and
+  // ExtensionPolicyService::IsTabOrExtensionBrowser tests the message manager
+  // group - without this, content scripts stop running.
+  bc.setMessageManagerGroup?.("browsers");
+
+  return bc.embedderElement;
 }
 
-// Only worth doing when something actually uses it.
-Services.obs.addObserver({
-  observe(subject) {
-    try {
-      const win = subject;
-      const bc = win.docShell && win.docShell.browsingContext;
-      if (bc && bc.isContent && !bc.parent) {
-        ensureEmbedderElement(win);
-      }
-    } catch (e) {}
-  },
-}, "content-document-global-created", false);
+// ---------------------------------------------------------------------------
+// Progress listeners
+// ---------------------------------------------------------------------------
 
-// tabs.insertCSS and tabs.executeScript run through TabBase in ext-tabs-base.js,
-// which toolkit already registers as b-tabs-base in this same category. It only
-// needs a wrapper that can name a browser for a tab id - and EmbedLite shows one
-// content window at a time, so the wrapper points at whatever is current.
+class BrowserProgressListener {
+  constructor(browser, listener, flags) {
+    this.listener = listener;
+    this.browser = browser;
+    this.filter = new BrowserStatusFilter(this, flags);
+    this.browser.webProgress?.addProgressListener(this.filter, flags);
+  }
 
+  destroy() {
+    this.browser.webProgress?.removeProgressListener(this.filter);
+    this.filter.removeProgressListener(this);
+    this.browser = null;
+    this.filter = null;
+    this.listener = null;
+  }
+
+  delegate(method, ...args) {
+    if (this.listener[method]) {
+      this.listener[method](this.browser, ...args);
+    }
+  }
+
+  onLocationChange(webProgress, request, locationURI, flags) {
+    this.delegate("onLocationChange", webProgress, request, locationURI, flags);
+  }
+
+  onStateChange(webProgress, request, stateFlags, status) {
+    this.delegate("onStateChange", webProgress, request, stateFlags, status);
+  }
+
+  QueryInterface = ChromeUtils.generateQI([
+    "nsIWebProgressListener",
+    "nsIWebProgressListener2",
+    "nsISupportsWeakReference",
+  ]);
+}
+
+class ProgressListenerWrapper {
+  constructor(window, listener) {
+    this.listener = new BrowserProgressListener(
+      window,
+      listener,
+      PROGRESS_LISTENER_FLAGS
+    );
+  }
+
+  destroy() {
+    this.listener.destroy();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Window tracking
+// ---------------------------------------------------------------------------
+
+class WindowTracker extends WindowTrackerBase {
+  constructor(...args) {
+    super(...args);
+    this.progressListeners = new DefaultWeakMap(() => new WeakMap());
+  }
+
+  get topWindow() {
+    return currentContentWindow();
+  }
+
+  get topNonPBWindow() {
+    return this.topWindow;
+  }
+
+  isBrowserWindow() {
+    // EmbedLite has no XUL browser window; the single content window is it.
+    return true;
+  }
+
+  addProgressListener(window, listener) {
+    const listeners = this.progressListeners.get(window);
+    if (!listeners.has(listener)) {
+      listeners.set(listener, new ProgressListenerWrapper(window, listener));
+    }
+  }
+
+  removeProgressListener(window, listener) {
+    const listeners = this.progressListeners.get(window);
+    const wrapper = listeners.get(listener);
+    if (wrapper) {
+      wrapper.destroy();
+      listeners.delete(listener);
+    }
+  }
+}
+
+const windowTracker = new WindowTracker();
+
+/**
+ * Returns the content window the browser UI is currently showing. Windows
+ * without an http(s) document - the hidden extension pages, about:blank -
+ * are skipped, since an extension asking for "the tab" means the page.
+ */
 function currentContentWindow() {
   const e = Services.ww.getWindowEnumerator();
   let found = null;
   while (e.hasMoreElements()) {
-    const w = e.getNext();
+    const win = e.getNext();
+    let href;
     try {
-      const bc = w.docShell && w.docShell.browsingContext;
-      // about:blank and the windowless browser used for background pages both
-      // pass the isContent check, so pick the one actually showing a page.
-      const href = String(w.location.href);
-      if (bc && bc.isContent && !bc.parent &&
-          (href.startsWith("http") || href.startsWith("file"))) {
-        found = w;
-      }
-    } catch (ex) {}
+      href = String(win.location.href);
+    } catch (ex) {
+      continue;
+    }
+    if (href.startsWith("http")) {
+      found = win;
+    }
   }
   return found;
 }
 
-class EmbedLiteTab extends TabBase {
-  // TabBase asks PrivateBrowsingUtils.isBrowserPrivate(browser), which wants a
-  // XUL browser with a chrome window behind it. EmbedLite has neither.
-  get _incognito() { return false; }
-  get incognito() { return false; }
-  get _favIconUrl() { return undefined; }
-  get attention() { return false; }
-  get audible() { return false; }
-  // The embedder element is a real XUL <browser>, which is what TabBase and
-  // PrivateBrowsingUtils expect; the content window is not.
-  get browser() {
-    try {
-      const el = this.nativeTab.docShell.browsingContext.top.embedderElement;
-      return el || this.nativeTab;
-    } catch (e) {
-      return this.nativeTab;
+// ---------------------------------------------------------------------------
+// Tab tracking
+// ---------------------------------------------------------------------------
+
+class TabTracker extends TabTrackerBase {
+  constructor() {
+    super();
+    this._nextId = 1;
+    this._idsByWindow = new WeakMap();
+    this._windowsById = new Map();
+  }
+
+  init() {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
+
+    Services.obs.addObserver(this, "content-document-global-created");
+    Services.obs.addObserver(this, "outer-window-destroyed");
+  }
+
+  observe(subject, topic) {
+    if (topic === "content-document-global-created") {
+      const win = subject;
+      let href;
+      try {
+        href = String(win.location.href);
+      } catch (e) {
+        return;
+      }
+      if (!href.startsWith("http")) {
+        return;
+      }
+      ensureEmbedderElement(win);
+      const isNew = !this._idsByWindow.has(win);
+      const nativeTab = this._trackWindow(win);
+      if (isNew) {
+        this.emit("tab-created", { nativeTab });
+      }
+    } else if (topic === "outer-window-destroyed") {
+      // The id stays in _windowsById until something asks for it; the weak
+      // map drops the window on its own.
     }
   }
-  get browsingContext() {
-    return this.nativeTab && this.nativeTab.docShell
-      ? this.nativeTab.docShell.browsingContext : null;
+
+  _trackWindow(win) {
+    let id = this._idsByWindow.get(win);
+    if (id === undefined) {
+      id = this._nextId++;
+      this._idsByWindow.set(win, id);
+      this._windowsById.set(id, Cu.getWeakReference(win));
+    }
+    return win;
   }
-  get alwaysOnTop() { return false; }
-  get autoDiscardable() { return false; }
-  get focused() { return true; }
-  get groupId() { return -1; }
-  get left() { return 0; }
-  get splitViewId() { return -1; }
-  get state() { return undefined; }
-  get discarded() { return false; }
-  get isArticle() { return false; }
-  get isInReaderMode() { return false; }
-  get sharingState() { return { camera: false, microphone: false, screen: undefined }; }
-  get muted() { return false; }
-  get volume() { return 1; }
-  get openerTabId() { return undefined; }
-  get cookieStoreId() { return "firefox-default"; }
-  get height() { return this.nativeTab ? this.nativeTab.innerHeight : 0; }
-  get width() { return this.nativeTab ? this.nativeTab.innerWidth : 0; }
-  get hidden() { return false; }
-  get index() { return 0; }
-  get mutedInfo() { return { muted: false }; }
-  get lastAccessed() { return 0; }
-  get pinned() { return false; }
-  get active() { return true; }
-  get highlighted() { return true; }
-  get selected() { return true; }
-  get status() { return "complete"; }
-  get successorTabId() { return -1; }
-  get windowId() { return EMBEDLITE_WINDOW_ID; }
-  get isArticle() { return false; }
-  get isInReaderMode() { return false; }
+
+  getId(nativeTab) {
+    return this._trackWindow(nativeTab) && this._idsByWindow.get(nativeTab);
+  }
+
+  getTab(id, default_ = undefined) {
+    const ref = this._windowsById.get(id);
+    const win = ref && ref.get();
+    if (win) {
+      return win;
+    }
+    // Fall back to whatever the browser is showing - the UI owns the tab list,
+    // so an id we never saw is usually the current page.
+    const current = currentContentWindow();
+    if (current) {
+      return current;
+    }
+    if (default_ !== undefined) {
+      return default_;
+    }
+    throw new ExtensionError(`Invalid tab ID: ${id}`);
+  }
+
+  getBrowserData(browser) {
+    if (!browser) {
+      return { tabId: -1, windowId: -1 };
+    }
+    // browser is the embedder element we parked in the hidden document, so
+    // ownerGlobal points there rather than at the page. Walk the other way.
+    const bc = browser.browsingContext;
+    const win = bc && bc.window;
+    if (win && this._idsByWindow.has(win)) {
+      return {
+        tabId: this._idsByWindow.get(win),
+        windowId: EMBEDLITE_WINDOW_ID,
+      };
+    }
+    const current = currentContentWindow();
+    if (current) {
+      return {
+        tabId: this.getId(current),
+        windowId: EMBEDLITE_WINDOW_ID,
+      };
+    }
+    return { tabId: -1, windowId: -1 };
+  }
+
+  getBrowserDataForContext(context) {
+    if (context.xulBrowser) {
+      return this.getBrowserData(context.xulBrowser);
+    }
+    return { tabId: -1, windowId: EMBEDLITE_WINDOW_ID };
+  }
+
+  get activeTab() {
+    return currentContentWindow();
+  }
+
+  getTabForBrowser(browser) {
+    const { tabId } = this.getBrowserData(browser);
+    if (tabId < 0) {
+      return null;
+    }
+    return this.getTab(tabId, null);
+  }
 }
 
-class EmbedLiteTabManager extends TabManagerBase {
-  get(tabId, default_ = undefined) {
-    const win = currentContentWindow();
-    return win ? this.getWrapper(win) : default_;
+const tabTracker = new TabTracker();
+tabTracker.init();
+
+Object.assign(global, { tabTracker, windowTracker });
+
+// ---------------------------------------------------------------------------
+// Tab, Window and their managers
+// ---------------------------------------------------------------------------
+
+class Tab extends TabBase {
+  get _favIconUrl() {
+    return undefined;
   }
-  addActiveTabPermission(nativeTab = currentContentWindow()) {
+
+  get browser() {
+    return ensureEmbedderElement(this.nativeTab);
+  }
+
+  // The embedder element is a stand-in living in a hidden document and has no
+  // browsing context of its own. Frame lookups (frameId, allFrames) need the
+  // real one from the content window.
+  get browsingContext() {
+    return this.nativeTab.docShell?.browsingContext ?? null;
+  }
+
+  // TabBase reads browser.currentURI, but the embedder element is a stand-in
+  // and never navigates - it always reports about:blank.
+  get _url() {
+    try {
+      return String(this.nativeTab.location.href);
+    } catch (e) {
+      return "about:blank";
+    }
+  }
+
+  get _title() {
+    try {
+      return this.nativeTab.document.title || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  get attention() {
+    return false;
+  }
+
+  get audible() {
+    return false;
+  }
+
+  get discarded() {
+    return false;
+  }
+
+  get cookieStoreId() {
+    return "firefox-default";
+  }
+
+  get height() {
+    return this.nativeTab.innerHeight || 0;
+  }
+
+  get width() {
+    return this.nativeTab.innerWidth || 0;
+  }
+
+  get incognito() {
+    const browser = this.browser;
+    return browser ? PrivateBrowsingUtils.isBrowserPrivate(browser) : false;
+  }
+
+  get index() {
+    return 0;
+  }
+
+  get mutedInfo() {
+    return { muted: false };
+  }
+
+  get lastAccessed() {
+    return Date.now();
+  }
+
+  get pinned() {
+    return false;
+  }
+
+  get active() {
+    return this.nativeTab === currentContentWindow();
+  }
+
+  get highlighted() {
+    return this.active;
+  }
+
+  get selected() {
+    return this.active;
+  }
+
+  get status() {
+    try {
+      return this.nativeTab.document.readyState === "complete"
+        ? "complete"
+        : "loading";
+    } catch (e) {
+      return "complete";
+    }
+  }
+
+  get successorTabId() {
+    return -1;
+  }
+
+  get groupId() {
+    return -1;
+  }
+
+  get openerTabId() {
+    return undefined;
+  }
+
+  get window() {
+    return this.nativeTab;
+  }
+
+  get windowId() {
+    return EMBEDLITE_WINDOW_ID;
+  }
+
+  get hidden() {
+    return false;
+  }
+
+  get autoDiscardable() {
+    return false;
+  }
+
+  get splitViewId() {
+    return -1;
+  }
+
+  get isArticle() {
+    return false;
+  }
+
+  get isInReaderMode() {
+    return false;
+  }
+
+  get sharingState() {
+    return { screen: undefined, microphone: false, camera: false };
+  }
+}
+
+class TabContext extends EventEmitter {
+  constructor(getDefaultPrototype) {
+    super();
+    this.getDefaultPrototype = getDefaultPrototype;
+    this.tabData = new Map();
+  }
+
+  get(tabId) {
+    if (!this.tabData.has(tabId)) {
+      this.tabData.set(tabId, Object.create(this.getDefaultPrototype(tabId)));
+    }
+    return this.tabData.get(tabId);
+  }
+
+  clear(tabId) {
+    this.tabData.delete(tabId);
+  }
+
+  shutdown() {
+    this.tabData.clear();
+  }
+}
+
+class Window extends WindowBase {
+  get focused() {
+    try {
+      return this.window.document.hasFocus();
+    } catch (e) {
+      return true;
+    }
+  }
+
+  get top() {
+    return 0;
+  }
+
+  get left() {
+    return 0;
+  }
+
+  get width() {
+    return this.window.innerWidth || 0;
+  }
+
+  get height() {
+    return this.window.innerHeight || 0;
+  }
+
+  get incognito() {
+    return false;
+  }
+
+  get alwaysOnTop() {
+    return false;
+  }
+
+  get isLastFocused() {
+    return true;
+  }
+
+  get state() {
+    return "fullscreen";
+  }
+
+  get type() {
+    return "normal";
+  }
+
+  get title() {
+    try {
+      return this.window.document.title || "";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  *getTabs() {
+    yield this.activeTab;
+  }
+
+  *getHighlightedTabs() {
+    yield this.activeTab;
+  }
+
+  get activeTab() {
+    const { tabManager } = this.extension;
+    const win = currentContentWindow();
+    return win ? tabManager.getWrapper(win) : null;
+  }
+
+  getTabAtIndex(index) {
+    return index === 0 ? this.activeTab : undefined;
+  }
+}
+
+Object.assign(global, { Tab, TabContext, Window });
+
+class TabManager extends TabManagerBase {
+  get(tabId, default_ = undefined) {
+    const nativeTab = tabTracker.getTab(tabId, default_);
+    if (nativeTab) {
+      return this.getWrapper(nativeTab);
+    }
+    return default_;
+  }
+
+  addActiveTabPermission(nativeTab = tabTracker.activeTab) {
     return super.addActiveTabPermission(nativeTab);
   }
-  revokeActiveTabPermission(nativeTab = currentContentWindow()) {
+
+  revokeActiveTabPermission(nativeTab = tabTracker.activeTab) {
     return super.revokeActiveTabPermission(nativeTab);
   }
-  canAccessTab() { return true; }
+
+  canAccessTab() {
+    return true;
+  }
+
   wrapTab(nativeTab) {
-    return new EmbedLiteTab(this.extension, nativeTab, EMBEDLITE_TAB_ID);
+    return new Tab(this.extension, nativeTab, tabTracker.getId(nativeTab));
   }
 }
 
-Object.assign(global, {
-  tabTracker,
-  windowTracker,
-  Tab: EmbedLiteTab,
-  TabManager: EmbedLiteTabManager,
+class WindowManager extends WindowManagerBase {
+  get(windowId, context) {
+    const win = currentContentWindow();
+    return this.getWrapper(win, context);
+  }
+
+  *getAll() {
+    const win = currentContentWindow();
+    if (win) {
+      yield this.getWrapper(win);
+    }
+  }
+
+  wrapWindow(window) {
+    return new Window(this.extension, window, EMBEDLITE_WINDOW_ID);
+  }
+}
+
+extensions.on("startup", (type, extension) => {
+  defineLazyGetter(extension, "tabManager", () => new TabManager(extension));
+  defineLazyGetter(
+    extension,
+    "windowManager",
+    () => new WindowManager(extension)
+  );
 });
 
-// Every extension gets its own tabManager; Firefox and Android wire this up the
-// same way. Without it, tabs.insertCSS and tabs.executeScript have nothing to
-// inject into.
-// eslint-disable-next-line mozilla/balanced-listeners
-extensions.on("startup", (type, extension) => {
-  defineLazyGetter(extension, "tabManager",
-                   () => new EmbedLiteTabManager(extension));
+extensions.on("page-shutdown", (type, context) => {
+  if (context.viewType === "tab") {
+    context.close();
+  }
 });
+
+global.openOptionsPage = async extension => {
+  const url = extension.manifest.options_ui?.page;
+  if (!url) {
+    throw new ExtensionError("No options page");
+  }
+  throw new ExtensionError("Options pages are not supported yet");
+};
