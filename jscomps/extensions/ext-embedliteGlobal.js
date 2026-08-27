@@ -96,6 +96,10 @@ function ensureEmbedderElement(win) {
     br.setAttribute("remote", "false");
     doc.documentElement.appendChild(br);
     win.windowUtils.setEmbedderElement(br);
+    // SetEmbedderElement also writes EmbedderElementType and clears the message
+    // manager group, which ExtensionPolicyService checks before running content
+    // scripts. Put it back.
+    bc.top.messageManagerGroup = "browsers";
   } catch (e) {}
 }
 
@@ -144,7 +148,16 @@ class EmbedLiteTab extends TabBase {
   get _favIconUrl() { return undefined; }
   get attention() { return false; }
   get audible() { return false; }
-  get browser() { return this.nativeTab; }
+  // The embedder element is a real XUL <browser>, which is what TabBase and
+  // PrivateBrowsingUtils expect; the content window is not.
+  get browser() {
+    try {
+      const el = this.nativeTab.docShell.browsingContext.top.embedderElement;
+      return el || this.nativeTab;
+    } catch (e) {
+      return this.nativeTab;
+    }
+  }
   get browsingContext() {
     return this.nativeTab && this.nativeTab.docShell
       ? this.nativeTab.docShell.browsingContext : null;
