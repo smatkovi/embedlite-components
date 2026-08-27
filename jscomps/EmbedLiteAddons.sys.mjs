@@ -65,6 +65,24 @@ export function $EmbedLiteAddons() {
     AddonManagerPrivate.startup();
     Logger.warn("AddonManager started, isReady=" + AddonManager.isReady);
 
+    // Event pages (persistent: false) only start when an event they registered
+    // for arrives. Firefox restores those primed listeners from the startup
+    // cache; that path does not run here, so they stay asleep forever and
+    // never see a navigation. Wake them once at startup instead.
+    AddonManager.getAllAddons().then(list => {
+      for (const addon of list) {
+        if (!addon.isActive || addon.type !== "extension") {
+          continue;
+        }
+        const ext = ExtensionParent.GlobalManager.getExtension(addon.id);
+        if (ext && ext.backgroundState === "stopped") {
+          ext.wakeupBackground().catch(e => {
+            Logger.warn("wakeupBackground failed for " + addon.id + ": " + e);
+          });
+        }
+      }
+    }, e => Logger.warn("getAllAddons failed: " + e));
+
     // Extension pages (options, popups, the uBlock dashboard) get their browser
     // object from ExtensionProcessScript.initExtensionDocument. Firefox calls it
     // from the ExtensionContent actor; EmbedLite never does, so those pages load

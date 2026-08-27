@@ -37,8 +37,15 @@ this.tabs = class extends ExtensionAPI {
     const fail = () => Promise.reject(new Error("tabs API is not available"));
     return {
       tabs: {
-        get: fail,
-        getCurrent: () => Promise.resolve(undefined),
+        get: tabId => {
+          const tab = context.extension.tabManager.get(tabId);
+          return tab ? Promise.resolve(tab.convert())
+                     : Promise.reject(new Error("No tab with id: " + tabId));
+        },
+        getCurrent: () => {
+          const tab = context.extension.tabManager.get(1);
+          return Promise.resolve(tab ? tab.convert() : undefined);
+        },
         create: fail,
         update: fail,
         remove: () => Promise.resolve(),

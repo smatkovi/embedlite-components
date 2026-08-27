@@ -149,7 +149,20 @@ class EmbedLiteTab extends TabBase {
     return this.nativeTab && this.nativeTab.docShell
       ? this.nativeTab.docShell.browsingContext : null;
   }
+  get alwaysOnTop() { return false; }
+  get autoDiscardable() { return false; }
+  get focused() { return true; }
+  get groupId() { return -1; }
+  get left() { return 0; }
+  get splitViewId() { return -1; }
+  get state() { return undefined; }
   get discarded() { return false; }
+  get isArticle() { return false; }
+  get isInReaderMode() { return false; }
+  get sharingState() { return { camera: false, microphone: false, screen: undefined }; }
+  get muted() { return false; }
+  get volume() { return 1; }
+  get openerTabId() { return undefined; }
   get cookieStoreId() { return "firefox-default"; }
   get height() { return this.nativeTab ? this.nativeTab.innerHeight : 0; }
   get width() { return this.nativeTab ? this.nativeTab.innerWidth : 0; }
