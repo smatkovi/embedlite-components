@@ -96,8 +96,11 @@ EmbedLiteSearchEngine.prototype = {
       case "app-startup": {
         Services.obs.addObserver(this, "xpcom-shutdown", true);
         Services.obs.addObserver(this, "embedui:search", true);
+        // Not yet: the search service reads its configuration through remote
+        // settings (IndexedDB), and the quota manager only knows the profile
+        // directory after profile-do-change, which EmbedLite sends after
+        // app-startup. An open before that fails and stays failed.
         Services.obs.addObserver(this, "profile-after-change", false);
-        this._notifyInit();
         break;
       }
       case "profile-after-change": {
