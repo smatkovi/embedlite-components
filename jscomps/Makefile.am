@@ -34,6 +34,7 @@ jscomps_manifest_DATA = \
 	LoginsHelper.sys.mjs \
 	EmbedLiteWebrtcUI.sys.mjs \
 	IntentProtocolHandler.sys.mjs \
+	EmbedLiteAdBlock.sys.mjs \
 	$(NULL)
 
 AM_CPPFLAGS = $(DEPS_CFLAGS)

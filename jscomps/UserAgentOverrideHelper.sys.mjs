@@ -18,6 +18,9 @@ const PREF_OVERRIDE             = "general.useragent.override";
 const { XPCOMUtils } = ChromeUtils.importESModule("resource://gre/modules/XPCOMUtils.sys.mjs");
 const { UserAgentOverrides } = ChromeUtils.importESModule("chrome://embedlite/content/UserAgentOverrides.sys.mjs");
 
+const { AdBlock } = ChromeUtils.importESModule(
+  "resource://embedlite-components/EmbedLiteAdBlock.sys.mjs");
+
 Services.scriptloader.loadSubScript("chrome://embedlite/content/Logger.js");
 
 // UserAgentOverrideHelper service
@@ -93,6 +96,7 @@ var UserAgent = {
       return
     }
 
+    AdBlock.init();
     Services.obs.addObserver(this.onModifyRequest.bind(this),
                              "http-on-modify-request");
     Services.prefs.addObserver(PREF_OVERRIDE, this, false);
@@ -113,6 +117,10 @@ var UserAgent = {
   onModifyRequest(aSubject, aTopic, aData) {
     if (aTopic === "http-on-modify-request") {
       let channel = aSubject.QueryInterface(Ci.nsIHttpChannel);
+
+      if (AdBlock.onRequest(channel)) {
+        return;
+      }
 
       let loadInfo = channel.loadInfo;
       if (loadInfo.securityMode === loadInfo.SEC_REQUIRE_CORS_DATA_INHERITS) {
